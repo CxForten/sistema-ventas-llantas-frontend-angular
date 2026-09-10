@@ -1,0 +1,145 @@
+<div class="modal-overlay" (click)="closed.emit()">
+  <div class="modal wide" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <h3>
+        Venta {{ sale().number }}
+        @if (sale().status === 'anulada') {
+          <span class="badge badge-red" style="margin-left: 8px">Anulada</span>
+        }
+      </h3>
+      <button class="modal-close" (click)="closed.emit()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- ============ CABECERA ============ -->
+      <div style="display: flex; justify-content: space-between; gap: 20px; margin-bottom: 18px; font-size: 13px">
+        <div>
+          <b>Cliente:</b> {{ sale().customer_name }}<br />
+          @if (sale().customer_ident !== '9999999999') {
+            <b>CI/RUC:</b> {{ sale().customer_ident }}<br />
+          }
+          <b>Fecha:</b> {{ sale().sold_at | date: 'dd/MM/yyyy HH:mm' }}
+        </div>
+        <div style="text-align: right">
+          <b>Pago:</b> {{ methodLabel(sale().payment_method) }}<br />
+          <b>Comprobante:</b>
+          {{ sale().doc_type === 'factura' ? 'Factura' : 'Consumidor final' }}<br />
+          @if (sale().user) {
+            <b>Atendió:</b> {{ sale().user }}
+          }
+        </div>
+      </div>
+
+      <!-- ============ LÍNEAS ============ -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Código</th>
+              <th class="cell-right">Cant.</th>
+              @if (canSeeCost()) { <th class="cell-right">Costo</th> }
+              <th class="cell-right">Precio</th>
+              <th class="cell-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of sale().items ?? []; track item.id) {
+              <tr>
+                <td>
+                  <b>{{ item.name }}</b>
+                  @if (item.spec) { <div class="cell-muted">{{ item.spec }}</div> }
+                </td>
+                <td class="cell-muted">{{ item.sku }}</td>
+                <td class="cell-right num">{{ item.qty }}</td>
+                @if (canSeeCost()) {
+                  <td class="cell-right num cell-muted">{{ item.unit_cost_cents | money }}</td>
+                }
+                <td class="cell-right num">{{ item.unit_price_cents | money }}</td>
+                <td class="cell-right num cell-strong">{{ item.line_total_cents | money }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ============ TOTALES ============ -->
+      <div class="cart-totals" style="border-top: 1px solid var(--line); margin-top: 14px">
+        <div class="tot-row">
+          <span>Subtotal (costo + {{ sale().margin_pct }}%)</span>
+          <span class="num">{{ sale().subtotal_cents | money }}</span>
+        </div>
+
+        @if (sale().discount_cents > 0) {
+          <div class="tot-row">
+            <span>Descuento</span>
+            <span class="num">− {{ sale().discount_cents | money }}</span>
+          </div>
+        }
+
+        @if (sale().card_fee_cents > 0) {
+          <div class="tot-row">
+            <span>Recargo por tarjeta</span>
+            <span class="num">+ {{ sale().card_fee_cents | money }}</span>
+          </div>
+        }
+
+        <div class="tot-row" style="margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 15px">
+          <b>Total cobrado</b>
+          <b class="num">{{ sale().total_cents | money }}</b>
+        </div>
+
+        @if (sale().card_fee_cents > 0) {
+          <div class="tot-row" style="color: var(--muted)">
+            <span>Recargo de tarjeta (del banco)</span>
+            <span class="num">− {{ sale().card_fee_cents | money }}</span>
+          </div>
+        }
+
+        <div class="tot-row">
+          <span>Ingreso del negocio</span>
+          <span class="num cell-strong">{{ sale().business_income_cents | money }}</span>
+        </div>
+
+        @if (canSeeCost()) {
+          <div class="tot-row" style="color: var(--muted)">
+            <span>Costo de los productos</span>
+            <span class="num">− {{ sale().cost_total_cents | money }}</span>
+          </div>
+
+          <div class="tot-row" style="color: var(--gold-700); font-size: 14px">
+            <b>Margen bruto</b>
+            <b class="num">{{ sale().gross_margin_cents | money }}</b>
+          </div>
+        }
+
+        @if (payment(); as p) {
+          @if (sale().payment_method === 'efectivo') {
+            <div class="tot-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line)">
+              <span>Recibido / cambio</span>
+              <span class="num">{{ p.received_cents | money }} / {{ p.change_cents | money }}</span>
+            </div>
+          }
+        }
+      </div>
+
+      @if (sale().override_reason) {
+        <p class="cell-muted" style="margin-top: 14px">
+          <b>Nota:</b> {{ sale().override_reason }}
+        </p>
+      }
+
+      @if (canVoid() && sale().status === 'completada') {
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line)">
+          <button class="btn btn-danger btn-sm" (click)="voidRequested.emit(sale())">
+            Anular esta venta
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-secondary" (click)="closed.emit()">Cerrar</button>
+    </div>
+  </div>
+</div>

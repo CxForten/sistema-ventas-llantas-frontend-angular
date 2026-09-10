@@ -10,8 +10,14 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss"
-        }
+          "style": "scss",
+          "inlineStyle": true,
+          "skipTests": true
+        },
+        "@schematics/angular:service": {"skipTests": true},
+        "@schematics/angular:guard": {"skipTests": true},
+        "@schematics/angular:pipe": {"skipTests": true},
+        "@schematics/angular:interceptor": {"skipTests": true}
       },
       "root": "",
       "sourceRoot": "src",
@@ -59,6 +65,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "llantas_front:build:production"

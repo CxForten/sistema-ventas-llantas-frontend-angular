@@ -1,0 +1,300 @@
+<div class="page-head">
+  <div>
+    <h1>Inventario</h1>
+    <div class="sub">{{ products().length }} productos en el catálogo</div>
+  </div>
+  <button class="btn btn-primary" (click)="openNew()">Nuevo producto</button>
+</div>
+
+<div class="toolbar">
+  <div class="search-input">
+    <input
+      type="text"
+      placeholder="Buscar por medida, marca o código…"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+    />
+  </div>
+
+  <div class="chip-row">
+    <button class="chip" [class.active]="categoryFilter() === null" (click)="categoryFilter.set(null)">
+      Todo
+    </button>
+    @for (cat of categories(); track cat.id) {
+      <button class="chip" [class.active]="categoryFilter() === cat.id" (click)="categoryFilter.set(cat.id)">
+        {{ cat.name }}
+      </button>
+    }
+  </div>
+</div>
+
+<div class="panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Código</th>
+          <th>Categoría</th>
+          @if (canSeeCost()) { <th class="cell-right">Costo</th> }
+          <th class="cell-right">Precio</th>
+          <th class="cell-right">Stock</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of products(); track p.id) {
+          <tr>
+            <td>
+              <b class="cell-strong">{{ p.name }}</b>
+              <div class="cell-muted">{{ p.spec || p.brand || '—' }}</div>
+            </td>
+            <td class="cell-muted">{{ p.sku }}</td>
+            <td><span class="badge badge-gray">{{ p.category_name || 'Sin categoría' }}</span></td>
+            @if (canSeeCost()) {
+              <td class="cell-right num">{{ p.cost_cents | money }}</td>
+            }
+            <td class="cell-right num cell-strong">{{ p.price_cents | money }}</td>
+            <td class="cell-right num">
+              {{ p.stock }}
+              @if (p.is_out) {
+                <div class="badge badge-red">Sin stock</div>
+              } @else if (p.is_low) {
+                <div class="badge badge-amber">Bajo</div>
+              }
+            </td>
+            <td>
+              <button class="btn btn-secondary btn-sm" (click)="openAdjust(p)">Ajustar</button>
+              <button class="btn btn-secondary btn-sm" (click)="openKardex(p)">Kardex</button>
+              <button class="btn btn-secondary btn-sm" (click)="openEdit(p)">Editar</button>
+              <button class="btn btn-ghost btn-sm" style="color: var(--red)" (click)="remove(p)">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="canSeeCost() ? 7 : 6">
+              <div class="empty-state">
+                <b>{{ loading() ? 'Cargando…' : 'No hay productos' }}</b>
+                @if (!loading()) { Registra el primero para empezar a vender. }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ MODAL: producto ============ -->
+@if (modalOpen()) {
+  <div class="modal-overlay" (click)="modalOpen.set(false)">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ editing() ? 'Editar producto' : 'Nuevo producto' }}</h3>
+        <button class="modal-close" (click)="modalOpen.set(false)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label>Nombre</label>
+            <input
+              type="text"
+              placeholder="Llanta 185/65 R15 Michelin Energy XM2+"
+              [ngModel]="form().name"
+              (ngModelChange)="patch('name', $event)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Código (SKU)</label>
+            <input type="text" placeholder="LLA-002" [ngModel]="form().sku" (ngModelChange)="patch('sku', $event)" />
+          </div>
+
+          <div class="form-field">
+            <label>Categoría</label>
+            <select [ngModel]="form().category_id" (ngModelChange)="patch('category_id', +$event)">
+              @for (cat of categories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Marca</label>
+            <input type="text" placeholder="Michelin" [ngModel]="form().brand" (ngModelChange)="patch('brand', $event)" />
+          </div>
+
+          <div class="form-field">
+            <label>Medida o especificación</label>
+            <input
+              type="text"
+              placeholder="185/65 R15 88H"
+              [ngModel]="form().spec"
+              (ngModelChange)="patch('spec', $event)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Precio de costo</label>
+            <input
+              type="text"
+              inputmode="decimal"
+              placeholder="72.00"
+              [ngModel]="form().cost"
+              (ngModelChange)="patch('cost', $event)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Margen de ganancia (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="200"
+              [ngModel]="form().margin_pct"
+              (ngModelChange)="patch('margin_pct', +$event)"
+            />
+          </div>
+
+          <div class="form-field full">
+            <label>Precio de venta</label>
+            <div class="led-total">
+              <span class="led-label">Se cobra</span>
+              <span class="led-val">{{ previewPrice() | money }}</span>
+            </div>
+          </div>
+
+          @if (!editing()) {
+            <div class="form-field">
+              <label>Stock inicial</label>
+              <input type="number" min="0" [ngModel]="form().stock" (ngModelChange)="patch('stock', +$event)" />
+            </div>
+          } @else {
+            <div class="form-field">
+              <label>Stock actual</label>
+              <input type="number" [value]="editing()!.stock" disabled />
+              <span class="cell-muted">Se cambia desde Ajustar</span>
+            </div>
+          }
+
+          <div class="form-field">
+            <label>Avisar cuando queden menos de</label>
+            <input type="number" min="0" [ngModel]="form().min_stock" (ngModelChange)="patch('min_stock', +$event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" (click)="modalOpen.set(false)">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : 'Guardar producto' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ MODAL: ajustar inventario ============ -->
+@if (adjustOpen()) {
+  <div class="modal-overlay" (click)="adjustOpen.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Ajustar inventario</h3>
+        <button class="modal-close" (click)="adjustOpen.set(false)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="margin-bottom: 16px">
+          <b>{{ adjustProduct()?.name }}</b>
+          <br />
+          <span class="cell-muted">Stock actual: {{ adjustProduct()?.stock }}</span>
+        </p>
+
+        <div class="form-field">
+          <label>Tipo de movimiento</label>
+          <select [ngModel]="adjustForm().type" (ngModelChange)="patchAdjust('type', $event)">
+            <option value="entrada">Entrada — llegó mercadería</option>
+            <option value="salida">Salida — se fue mercadería</option>
+            <option value="ajuste">Conteo físico — dejar en este número</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>
+            {{ adjustForm().type === 'ajuste' ? 'Cantidad contada' : 'Cantidad' }}
+          </label>
+          <input type="number" min="0" [ngModel]="adjustForm().qty" (ngModelChange)="patchAdjust('qty', +$event)" />
+        </div>
+
+        <div class="form-field">
+          <label>Motivo</label>
+          <input
+            type="text"
+            placeholder="Compra a distribuidora, factura 8842"
+            [ngModel]="adjustForm().reason"
+            (ngModelChange)="patchAdjust('reason', $event)"
+          />
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" (click)="adjustOpen.set(false)">Cancelar</button>
+        <button class="btn btn-primary" (click)="saveAdjust()">Guardar movimiento</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ MODAL: kardex ============ -->
+@if (kardexOpen()) {
+  <div class="modal-overlay" (click)="kardexOpen.set(false)">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Movimientos de {{ kardexProduct()?.name }}</h3>
+        <button class="modal-close" (click)="kardexOpen.set(false)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Movimiento</th>
+                <th class="cell-right">Cantidad</th>
+                <th class="cell-right">Antes</th>
+                <th class="cell-right">Después</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of movements(); track m.id) {
+                <tr>
+                  <td class="cell-muted">{{ m.created_at | date: 'dd/MM/yy HH:mm' }}</td>
+                  <td>{{ movementLabel(m.type) }}</td>
+                  <td class="cell-right num cell-strong" [style.color]="m.qty < 0 ? 'var(--red)' : 'var(--green)'">
+                    {{ m.qty > 0 ? '+' : '' }}{{ m.qty }}
+                  </td>
+                  <td class="cell-right num cell-muted">{{ m.stock_before }}</td>
+                  <td class="cell-right num">{{ m.stock_after }}</td>
+                  <td class="cell-muted">{{ m.reason }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6"><div class="empty-state"><b>Sin movimientos</b></div></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" (click)="kardexOpen.set(false)">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}

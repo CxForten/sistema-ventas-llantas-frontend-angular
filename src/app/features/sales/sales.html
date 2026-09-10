@@ -1,0 +1,197 @@
+<div class="page-head">
+  <div>
+    <h1>Ventas</h1>
+    <div class="sub">Historial de transacciones</div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="search-input">
+    <input
+      type="text"
+      placeholder="Buscar por número o cliente…"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+    />
+  </div>
+
+  <div class="chip-row">
+    <button class="chip" [class.active]="methodFilter() === null" (click)="methodFilter.set(null)">Todas</button>
+    <button class="chip" [class.active]="methodFilter() === 'efectivo'" (click)="methodFilter.set('efectivo')">
+      Efectivo
+    </button>
+    <button class="chip" [class.active]="methodFilter() === 'tarjeta'" (click)="methodFilter.set('tarjeta')">
+      Tarjeta
+    </button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Venta</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Pago</th>
+          <th class="cell-right">Total</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sale of sales(); track sale.id) {
+          <tr style="cursor: pointer" (click)="openDetail(sale)">
+            <td class="cell-strong">{{ sale.number }}</td>
+            <td class="cell-muted">{{ sale.sold_at | date: 'dd/MM/yy HH:mm' }}</td>
+            <td>{{ sale.customer_name }}</td>
+            <td>
+              <span class="badge" [class.badge-green]="sale.payment_method === 'efectivo'"
+                    [class.badge-blue]="sale.payment_method !== 'efectivo'">
+                {{ methodLabel(sale.payment_method) }}
+              </span>
+            </td>
+            <td class="cell-right num cell-strong">{{ sale.total_cents | money }}</td>
+            <td>
+              @if (sale.status === 'anulada') {
+                <span class="badge badge-red">Anulada</span>
+              } @else {
+                <span class="badge badge-green">Completada</span>
+              }
+            </td>
+            <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <b>{{ loading() ? 'Cargando…' : 'Sin ventas' }}</b>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ MODAL: detalle ============ -->
+@if (detail(); as sale) {
+  <div class="modal-overlay" (click)="detail.set(null)">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Venta {{ sale.number }}</h3>
+        <button class="modal-close" (click)="detail.set(null)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 13px">
+          <div>
+            <b>Cliente:</b> {{ sale.customer_name }}<br />
+            @if (sale.customer_ident !== '9999999999') {
+              <b>CI/RUC:</b> {{ sale.customer_ident }}<br />
+            }
+            <b>Fecha:</b> {{ sale.sold_at | date: 'dd/MM/yyyy HH:mm' }}
+          </div>
+          <div style="text-align: right">
+            <b>Pago:</b> {{ methodLabel(sale.payment_method) }}<br />
+            <b>Comprobante:</b> {{ sale.doc_type === 'factura' ? 'Factura' : 'Consumidor final' }}<br />
+            @if (sale.user) { <b>Atendió:</b> {{ sale.user }} }
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="cell-right">Cant.</th>
+                <th class="cell-right">Precio</th>
+                <th class="cell-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of sale.items ?? []; track item.id) {
+                <tr>
+                  <td>
+                    <b>{{ item.name }}</b>
+                    <div class="cell-muted">{{ item.spec || item.sku }}</div>
+                  </td>
+                  <td class="cell-right num">{{ item.qty }}</td>
+                  <td class="cell-right num">{{ item.unit_price_cents | money }}</td>
+                  <td class="cell-right num cell-strong">{{ item.line_total_cents | money }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cart-totals" style="border-top: 1px solid var(--line); margin-top: 14px">
+          @if (sale.discount_cents > 0) {
+            <div class="tot-row">
+              <span>Descuento</span>
+              <span class="num">− {{ sale.discount_cents | money }}</span>
+            </div>
+          }
+
+          <div class="tot-row">
+            <span>Total cobrado</span>
+            <span class="num cell-strong">{{ sale.total_cents | money }}</span>
+          </div>
+
+          @if (sale.card_fee_cents > 0) {
+            <div class="tot-row" style="color: var(--muted)">
+              <span>Recargo de tarjeta (del banco)</span>
+              <span class="num">− {{ sale.card_fee_cents | money }}</span>
+            </div>
+          }
+
+          <div class="tot-row">
+            <span>Ingreso del negocio</span>
+            <span class="num cell-strong">{{ sale.business_income_cents | money }}</span>
+          </div>
+
+          @if (auth.can('products.cost') && sale.gross_margin_cents !== undefined) {
+            <div class="tot-row" style="color: var(--gold-700)">
+              <span>Ganancia</span>
+              <span class="num cell-strong">{{ sale.gross_margin_cents | money }}</span>
+            </div>
+          }
+        </div>
+
+        @if (sale.override_reason) {
+          <p class="cell-muted" style="margin-top: 12px">
+            <b>Nota:</b> {{ sale.override_reason }}
+          </p>
+        }
+
+        @if (sale.status === 'completada') {
+          <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line)">
+            <div class="form-field">
+              <label>Anular esta venta</label>
+              <input
+                type="text"
+                placeholder="Motivo: el cliente devolvió la mercadería…"
+                [ngModel]="voidReason()"
+                (ngModelChange)="voidReason.set($event)"
+              />
+              <span class="cell-muted">El stock vuelve al inventario y queda registrado en el kardex.</span>
+            </div>
+            <button
+              class="btn btn-danger"
+              [disabled]="voidReason().trim().length < 5 || voiding()"
+              (click)="confirmVoid()"
+            >
+              {{ voiding() ? 'Anulando…' : 'Anular venta' }}
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" (click)="detail.set(null)">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}

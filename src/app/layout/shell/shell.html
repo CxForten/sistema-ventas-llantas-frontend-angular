@@ -1,0 +1,48 @@
+<div class="app">
+    <aside class="sidebar" [class.open] = "menuOpen()">
+        <div class="brand">
+            <div class="brand-mark"></div>
+            <div class="brand-text">
+                <b> {{ auth.businessName() }}</b>
+                <span> Punto de venta</span>
+            </div>
+        </div>
+
+        <nav class="nav">
+            @for (group of groups(); track group){
+                <div class="nav-group-label">{{ group }}</div>
+                @for (link of linksOf(group); track link.path) {
+                    <a class="nav-item" [routerLink]="link.path" routerLinkActive="active" (click)="menuOpen.set(false)">
+                        {{link.label}}
+                    </a>
+                }
+            }
+        </nav>
+
+        <div class="sidebar-foot">
+            <div class="user-row">
+                <div class="avatar"> {{ auth.initials() }} </div>
+                <div class="user-meta">
+                    <b>{{ auth.user()?.name }}</b>
+                    <span><span class="status-dot"></span>En línea</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-sm btn-block" (click)="auth.logout()">
+                Cerrar sesión
+            </button>
+        </div>
+    </aside>
+    
+    <div class="sidebar-overlay" [class.open]="menuOpen()" (click)="menuOpen.set(false)"></div>
+    
+    <div class="main">
+        <div class="topbar">
+            <button class="burger" (click)="menuOpen.set(true)">☰</button>
+            <div class="topbar-title">{{ auth.businessName() }}</div>
+        </div>
+        
+        <div class="content">
+            <router-outlet />
+        </div>
+    </div>
+</div>

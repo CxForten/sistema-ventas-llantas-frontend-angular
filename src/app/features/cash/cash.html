@@ -1,0 +1,149 @@
+<div class="page-head">
+  <div>
+    <h1>Caja</h1>
+    <div class="sub">
+      {{ isOpen() ? 'Abierta desde las ' + (session()!.opened_at | date: 'HH:mm') : 'Cerrada' }}
+    </div>
+  </div>
+  @if (isOpen()) {
+    <button class="btn btn-secondary" (click)="refresh()">Actualizar</button>
+  }
+</div>
+
+@if (loading()) {
+  <div class="panel"><div class="panel-body"><div class="empty-state"><b>Cargando…</b></div></div></div>
+} @else if (!isOpen()) {
+  <!-- ============ CAJA CERRADA: abrir ============ -->
+  <div class="panel" style="max-width: 460px">
+    <div class="panel-head"><h3>Abrir la caja del día</h3></div>
+    <div class="panel-body">
+      <p class="cell-muted" style="margin-bottom: 16px">
+        Cuenta el dinero con el que arrancas el día y escríbelo aquí. Sin caja abierta no se pueden
+        registrar ventas.
+      </p>
+
+      <div class="form-field">
+        <label>Fondo inicial</label>
+        <input
+          type="text"
+          inputmode="decimal"
+          placeholder="50.00"
+          [ngModel]="openingInput()"
+          (ngModelChange)="openingInput.set($event)"
+        />
+      </div>
+
+      <div class="form-field">
+        <label>Nota (opcional)</label>
+        <input type="text" [ngModel]="notes()" (ngModelChange)="notes.set($event)" />
+      </div>
+
+      <button class="btn btn-primary btn-block" (click)="open()" [disabled]="busy()">
+        {{ busy() ? 'Abriendo…' : 'Abrir caja' }}
+      </button>
+    </div>
+  </div>
+} @else {
+  <!-- ============ CAJA ABIERTA: estado y cierre ============ -->
+  <div class="grid-kpi">
+    <div class="kpi">
+      <div class="k-label">Cobrado</div>
+      <div class="k-val num">{{ summary()!.total_cents | money }}</div>
+      <div class="k-note">{{ summary()!.sales_count }} ventas</div>
+    </div>
+
+    <div class="kpi is-key">
+      <div class="k-label">Ingreso del negocio</div>
+      <div class="k-val num">{{ summary()!.income_cents | money }}</div>
+      <div class="k-note">sin el recargo de tarjeta</div>
+    </div>
+
+    @if (auth.can('products.cost')) {
+      <div class="kpi">
+        <div class="k-label">Ganancia</div>
+        <div class="k-val num">{{ summary()!.margin_cents | money }}</div>
+        <div class="k-note">ingreso menos costo</div>
+      </div>
+    }
+
+    <div class="kpi">
+      <div class="k-label">Anuladas</div>
+      <div class="k-val num">{{ summary()!.voided_count }}</div>
+      <div class="k-note">no cuentan en los totales</div>
+    </div>
+  </div>
+
+  <div class="two-col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start">
+    <div class="panel">
+      <div class="panel-head"><h3>Qué debe haber en el cajón</h3></div>
+      <div class="panel-body">
+        <div class="tot-row">
+          <span>Fondo inicial</span>
+          <span class="num">{{ summary()!.opening_cents | money }}</span>
+        </div>
+        <div class="tot-row">
+          <span>Ventas en efectivo</span>
+          <span class="num">{{ summary()!.cash_cents | money }}</span>
+        </div>
+        <div class="tot-row" style="color: var(--muted)">
+          <span>Ventas con tarjeta (no entran al cajón)</span>
+          <span class="num">{{ summary()!.card_cents | money }}</span>
+        </div>
+        @if (summary()!.transfer_cents > 0) {
+          <div class="tot-row" style="color: var(--muted)">
+            <span>Transferencias (no entran al cajón)</span>
+            <span class="num">{{ summary()!.transfer_cents | money }}</span>
+          </div>
+        }
+
+        <div class="led-total">
+          <span class="led-label">Debe haber en caja</span>
+          <span class="led-val">{{ summary()!.expected_cents | money }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Cerrar la caja</h3></div>
+      <div class="panel-body">
+        <div class="form-field">
+          <label>Efectivo contado</label>
+          <input
+            type="text"
+            inputmode="decimal"
+            placeholder="0.00"
+            [ngModel]="countedInput()"
+            (ngModelChange)="countedInput.set($event)"
+          />
+        </div>
+
+        @if (liveDifference() !== null) {
+          @if (liveDifference() === 0) {
+            <p class="tot-row" style="color: var(--green); font-weight: 700">
+              <span>Cuadra exacto</span>
+            </p>
+          } @else if (liveDifference()! > 0) {
+            <p class="tot-row" style="color: var(--blue); font-weight: 700">
+              <span>Sobra</span>
+              <span class="num">{{ liveDifference() | money }}</span>
+            </p>
+          } @else {
+            <p class="tot-row" style="color: var(--red); font-weight: 700">
+              <span>Falta</span>
+              <span class="num">{{ -liveDifference()! | money }}</span>
+            </p>
+          }
+        }
+
+        <div class="form-field" style="margin-top: 12px">
+          <label>Nota del cierre (opcional)</label>
+          <input type="text" [ngModel]="notes()" (ngModelChange)="notes.set($event)" />
+        </div>
+
+        <button class="btn btn-primary btn-block" (click)="close()" [disabled]="busy()">
+          {{ busy() ? 'Cerrando…' : 'Cerrar caja' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

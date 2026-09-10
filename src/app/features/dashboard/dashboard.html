@@ -1,0 +1,279 @@
+<div class="page-head">
+  <div>
+    <h1>Resumen</h1>
+    <div class="sub">Cómo va el negocio hoy</div>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="panel"><div class="panel-body"><div class="empty-state"><b>Cargando…</b></div></div></div>
+} @else if (data(); as d) {
+  <!-- ============ KPIs ============ -->
+  <div class="grid-kpi">
+    <div class="kpi">
+      <div class="k-label">Cobrado hoy</div>
+      <div class="k-val num">{{ d.today.total_cents | money }}</div>
+      <div class="k-note">
+        {{ d.today.sales_count }} {{ d.today.sales_count === 1 ? 'venta' : 'ventas' }}
+      </div>
+    </div>
+
+    <div class="kpi is-key">
+      <div class="k-label">Ingreso del negocio</div>
+      <div class="k-val num">{{ d.today.income_cents | money }}</div>
+      <div class="k-note">sin el recargo de tarjeta</div>
+    </div>
+
+    @if (auth.can('products.cost')) {
+      <div class="kpi">
+        <div class="k-label">Ganancia</div>
+        <div class="k-val num">{{ d.today.margin_cents | money }}</div>
+        <div class="k-note">no descuenta arriendo ni sueldos</div>
+      </div>
+    }
+
+    <div class="kpi">
+      <div class="k-label">Del mes</div>
+      <div class="k-val num">{{ d.month.income_cents | money }}</div>
+      <div class="k-note">
+        {{ d.month.sales_count }} {{ d.month.sales_count === 1 ? 'venta' : 'ventas' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GRÁFICA ============ -->
+  <div class="panel" style="margin-bottom: 16px">
+    <div class="panel-head">
+      <h3>Ventas de la semana</h3>
+      <span class="cell-muted">toca un día para ver sus ventas</span>
+    </div>
+    <div class="panel-body">
+      <div style="display: flex; align-items: flex-end; gap: 12px; height: 190px; padding-top: 10px">
+        @for (day of d.series; track day.date) {
+          <button
+            class="chart-col"
+            [disabled]="day.sales_count === 0"
+            (click)="openDay(day)"
+            [title]="day.sales_count === 0 ? 'Sin ventas' : 'Ver las ventas de este día'"
+          >
+            <span class="chart-val num">
+              {{ day.total_cents > 0 ? (day.total_cents | money) : '' }}
+            </span>
+            <div class="chart-bar" [style.height]="barHeight(day.total_cents)"></div>
+            <span class="chart-lbl" [class.is-today]="isToday(day.date)">
+              {{ day.label }}<br />{{ day.date | date: 'd' }}
+            </span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VENTAS RECIENTES ============ -->
+  <div class="panel" style="margin-bottom: 16px">
+    <div class="panel-head">
+      <h3>Ventas recientes</h3>
+      <a class="cell-muted" routerLink="/ventas" style="font-size: 12.5px">Ver todas</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Venta</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Pago</th>
+            <th class="cell-right">Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sale of recentSales(); track sale.id) {
+            <tr style="cursor: pointer" (click)="openSale(sale)">
+              <td class="cell-strong">{{ sale.number }}</td>
+              <td class="cell-muted">{{ sale.sold_at | date: 'dd/MM HH:mm' }}</td>
+              <td>{{ sale.customer_name }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-green]="sale.payment_method === 'efectivo'"
+                  [class.badge-blue]="sale.payment_method !== 'efectivo'"
+                >
+                  {{ methodLabel(sale.payment_method) }}
+                </span>
+                @if (sale.status === 'anulada') {
+                  <span class="badge badge-red">Anulada</span>
+                }
+              </td>
+              <td class="cell-right num cell-strong">{{ sale.total_cents | money }}</td>
+              <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">
+                <div class="empty-state"><b>Todavía no hay ventas</b>La primera aparecerá aquí.</div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ RANKINGS ============ -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px">
+    <div class="panel">
+      <div class="panel-head"><h3>Lo que más sale</h3></div>
+      <div class="panel-body">
+        @for (item of topProducts(); track item.sku) {
+          <div class="tot-row">
+            <span>{{ item.name }}</span>
+            <span class="num cell-strong">{{ item.qty }}</span>
+          </div>
+        } @empty {
+          <div class="empty-state"><b>Sin datos todavía</b></div>
+        }
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Medidas más rotadas</h3></div>
+      <div class="panel-body">
+        @for (spec of topSpecs(); track spec.spec) {
+          <div class="tot-row">
+            <span>{{ spec.spec }}</span>
+            <span class="num cell-strong">{{ spec.qty }}</span>
+          </div>
+        } @empty {
+          <div class="empty-state"><b>Sin llantas vendidas aún</b></div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STOCK BAJO ============ -->
+  @if (d.low_stock.length) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Se está acabando</h3>
+        <span class="badge badge-amber">{{ d.low_stock.length }}</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Código</th>
+              <th class="cell-right">Quedan</th>
+              <th class="cell-right">Mínimo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of d.low_stock; track p.id) {
+              <tr>
+                <td>
+                  <b>{{ p.name }}</b>
+                  <div class="cell-muted">{{ p.spec }}</div>
+                </td>
+                <td class="cell-muted">{{ p.sku }}</td>
+                <td class="cell-right num cell-strong" [style.color]="p.stock <= 0 ? 'var(--red)' : 'var(--amber)'">
+                  {{ p.stock }}
+                </td>
+                <td class="cell-right num cell-muted">{{ p.min_stock }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}
+
+<!-- ============ MODAL: ventas de un día ============ -->
+@if (dayOpen() && daySelected(); as day) {
+  <div class="modal-overlay" (click)="closeDay()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Ventas del {{ day.date | date: 'EEEE d \'de\' MMMM' }}</h3>
+        <button class="modal-close" (click)="closeDay()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (dayLoading()) {
+          <div class="empty-state"><b>Cargando…</b></div>
+        } @else {
+          <div class="grid-kpi" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 18px">
+            <div class="kpi" style="padding: 13px">
+              <div class="k-label">Ventas</div>
+              <div class="k-val num" style="font-size: 20px">{{ dayTotals().count }}</div>
+            </div>
+            <div class="kpi" style="padding: 13px">
+              <div class="k-label">Cobrado</div>
+              <div class="k-val num" style="font-size: 20px">{{ dayTotals().total | money }}</div>
+            </div>
+            <div class="kpi is-key" style="padding: 13px">
+              <div class="k-label">Ingreso</div>
+              <div class="k-val num" style="font-size: 20px">{{ dayTotals().income | money }}</div>
+            </div>
+            @if (auth.can('products.cost')) {
+              <div class="kpi" style="padding: 13px">
+                <div class="k-label">Ganancia</div>
+                <div class="k-val num" style="font-size: 20px">{{ dayTotals().margin | money }}</div>
+              </div>
+            }
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Venta</th>
+                  <th>Hora</th>
+                  <th>Cliente</th>
+                  <th>Pago</th>
+                  <th class="cell-right">Artículos</th>
+                  <th class="cell-right">Total</th>
+                  <th class="cell-right">Ingreso</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sale of daySales(); track sale.id) {
+                  <tr style="cursor: pointer" [style.opacity]="sale.status === 'anulada' ? 0.5 : 1"
+                      (click)="openSale(sale)">
+                    <td class="cell-strong">{{ sale.number }}</td>
+                    <td class="cell-muted">{{ sale.sold_at | date: 'HH:mm' }}</td>
+                    <td>{{ sale.customer_name }}</td>
+                    <td>
+                      <span
+                        class="badge"
+                        [class.badge-green]="sale.payment_method === 'efectivo'"
+                        [class.badge-blue]="sale.payment_method !== 'efectivo'"
+                      >
+                        {{ methodLabel(sale.payment_method) }}
+                      </span>
+                      @if (sale.status === 'anulada') {
+                        <span class="badge badge-red">Anulada</span>
+                      }
+                    </td>
+                    <td class="cell-right num">{{ itemCount(sale) }}</td>
+                    <td class="cell-right num cell-strong">{{ sale.total_cents | money }}</td>
+                    <td class="cell-right num cell-muted">{{ sale.business_income_cents | money }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" (click)="closeDay()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ MODAL: detalle de venta ============ -->
+@if (saleDetail(); as sale) {
+  <app-sale-detail [sale]="sale" (closed)="closeSale()" />
+}

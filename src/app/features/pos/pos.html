@@ -1,0 +1,330 @@
+@if (cashOpen() === false) {
+  <div class="cash-warning">
+    <div>
+      <b>La caja está cerrada</b>
+      <span>Ábrela para poder registrar ventas.</span>
+    </div>
+    <button class="btn btn-primary btn-sm" routerLink="/caja">Abrir caja</button>
+  </div>
+}
+
+<div class="pos-layout">
+  <!-- ============ CATÁLOGO ============ -->
+  <div>
+    <div class="toolbar">
+      <div class="search-input">
+        <input
+          type="text"
+          placeholder="Buscar por medida (195/65 R15), marca o código…"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+        />
+      </div>
+    </div>
+
+    <div class="chip-row" style="margin-bottom: 16px">
+      <button class="chip" [class.active]="categoryFilter() === null" (click)="categoryFilter.set(null)">
+        Todo
+      </button>
+      @for (cat of categories(); track cat.id) {
+        <button class="chip" [class.active]="categoryFilter() === cat.id" (click)="categoryFilter.set(cat.id)">
+          {{ cat.name }}
+        </button>
+      }
+    </div>
+
+    <div class="prod-grid">
+      @for (product of products(); track product.id) {
+        <button
+          class="prod-card"
+          [disabled]="product.track_stock && product.stock <= 0"
+          (click)="addToCart(product)"
+        >
+          <div class="prod-thumb">◎</div>
+          <div class="prod-name">{{ product.name }}</div>
+          <div class="prod-spec">{{ product.spec || product.sku }}</div>
+          <div class="prod-price">{{ cart.unitPrice(product) | money }}</div>
+          <div
+            class="prod-stock"
+            [class.low]="product.is_low && !product.is_out"
+            [class.out]="product.is_out"
+          >
+            {{ product.is_out ? 'Sin stock' : 'Quedan ' + product.stock }}
+          </div>
+        </button>
+      } @empty {
+        <div class="empty-state" style="grid-column: 1 / -1">
+          <b>No hay resultados</b>
+          Busca por medida, marca o código.
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ============ CARRITO ============ -->
+  <div class="panel cart-panel">
+    <div class="panel-head">
+      <h3>Venta</h3>
+      <span class="cell-muted">{{ cart.count() }} artículos</span>
+    </div>
+
+    <div class="panel-body" style="padding-top: 8px">
+      <div class="cart-items">
+        @for (line of cart.lines(); track line.product.id) {
+          <div class="cart-item">
+            <div class="ci-info">
+              <b>{{ line.product.name }}</b>
+              <div class="ci-cost">
+                @if (auth.can('products.cost')) {
+                  costo {{ line.product.cost_cents | money }} →
+                }
+                {{ cart.unitPrice(line.product) | money }} c/u
+              </div>
+              <div class="ci-controls">
+                <button class="qty-btn" (click)="cart.changeQty(line.product.id, -1)">−</button>
+                <span class="qty-val">{{ line.qty }}</span>
+                <button class="qty-btn" (click)="cart.changeQty(line.product.id, 1)">+</button>
+              </div>
+            </div>
+            <div class="ci-right">
+              <span class="ci-total num">{{ cart.lineTotal(line) | money }}</span>
+              <button class="ci-del" (click)="cart.remove(line.product.id)">Quitar</button>
+            </div>
+          </div>
+        } @empty {
+          <div class="cart-empty">Toca un producto para agregarlo</div>
+        }
+      </div>
+
+      <div class="cart-totals">
+        @if (auth.can('products.cost')) {
+          <div class="tot-row">
+            <span>Costo</span>
+            <span class="num">{{ cart.costTotalCents() | money }}</span>
+          </div>
+        }
+
+        <div class="margin-pick">
+          <button class="margin-opt" [class.active]="cart.marginOverride() === null" (click)="setMargin(null)">
+            <span class="m-lbl">Precio normal</span>
+            <span class="m-val num">{{ cart.subtotalCents() | money }}</span>
+          </button>
+          <button class="margin-opt" [class.active]="cart.marginOverride() === 20" (click)="setMargin(20)">
+            <span class="m-lbl">Rebajado 20%</span>
+            <span class="m-val num">{{ cart.altSubtotalCents() | money }}</span>
+          </button>
+        </div>
+
+        <div class="tot-row" style="align-items: center; padding-top: 8px">
+          <span>Descuento</span>
+          <span class="disc-field">
+            $
+            <input
+              type="text"
+              inputmode="decimal"
+              placeholder="0.00"
+              (input)="onDiscountInput($any($event.target).value)"
+            />
+          </span>
+        </div>
+
+        <!-- ============ TOTAL EDITABLE ============ -->
+        <div class="led-total led-editable">
+          <div>
+            <span class="led-label">Total a pagar</span>
+            <span class="led-hint">se puede editar</span>
+          </div>
+          <input
+            class="led-input num"
+            type="text"
+            inputmode="decimal"
+            [placeholder]="cart.computedTotalCents() / 100 | number: '1.2-2'"
+            [ngModel]="totalInput()"
+            (ngModelChange)="onTotalInput($event)"
+          />
+        </div>
+
+        @if (cart.isOverridden()) {
+          <div class="override-note">
+            <div class="tot-row" style="color: var(--muted); font-size: 12px">
+              <span>Precio calculado</span>
+              <span class="num">{{ cart.computedTotalCents() | money }}</span>
+            </div>
+            <div class="form-field" style="margin: 8px 0 0">
+              <label>Motivo (opcional)</label>
+              <input
+                type="text"
+                placeholder="Cliente frecuente, precio acordado…"
+                [ngModel]="cart.overrideReason()"
+                (ngModelChange)="cart.overrideReason.set($event)"
+              />
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-top: 6px" (click)="resetTotal()">
+              Volver al precio calculado
+            </button>
+          </div>
+        }
+      </div>
+
+      <button
+        class="btn-charge"
+        [disabled]="cart.count() === 0 || cashOpen() === false"
+        (click)="openCheckout()"
+      >
+        Cobrar {{ cart.totalCents() | money }}
+      </button>
+
+      @if (cart.count() > 0) {
+        <button class="btn btn-ghost btn-sm btn-block" style="margin-top: 8px" (click)="cart.clear(); totalInput.set('')">
+          Vaciar
+        </button>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: cobrar ============ -->
+@if (checkoutOpen()) {
+  <div class="modal-overlay" (click)="checkoutOpen.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Cobrar</h3>
+        <button class="modal-close" (click)="checkoutOpen.set(false)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Total, también editable aquí -->
+        <div style="text-align: center; margin-bottom: 22px">
+          <div class="k-label" style="margin-bottom: 6px">Total a pagar</div>
+          <input
+            class="total-big num"
+            type="text"
+            inputmode="decimal"
+            [placeholder]="cart.computedTotalCents() / 100 | number: '1.2-2'"
+            [ngModel]="totalInput()"
+            (ngModelChange)="onTotalInput($event)"
+          />
+          <div class="cell-muted" style="font-size: 11.5px; margin-top: 4px">
+            {{ cart.isOverridden() ? 'Precio editado a mano' : 'toca el número para editarlo' }}
+          </div>
+        </div>
+
+        <!-- Método de pago -->
+        <div class="form-field" style="margin-bottom: 8px"><label>¿Cómo paga?</label></div>
+        <div class="pay-pick">
+          <button class="pay-opt" [class.sel]="cart.paymentMethod() === 'efectivo'" (click)="setMethod('efectivo')">
+            <span class="pay-ic">💵</span>
+            <span>Efectivo</span>
+          </button>
+          <button class="pay-opt" [class.sel]="cart.paymentMethod() === 'tarjeta'" (click)="setMethod('tarjeta')">
+            <span class="pay-ic">💳</span>
+            <span>Tarjeta</span>
+          </button>
+        </div>
+
+        @if (cart.paymentMethod() === 'efectivo') {
+          <div class="form-field" style="margin-top: 18px">
+            <label>Con cuánto paga</label>
+            <input
+              type="text"
+              inputmode="decimal"
+              placeholder="0.00"
+              [ngModel]="receivedInput()"
+              (ngModelChange)="receivedInput.set($event)"
+            />
+          </div>
+
+          <div class="chip-row" style="margin-bottom: 14px">
+            @for (amount of suggestedAmounts(); track amount) {
+              <button class="chip" (click)="quickAmount(amount)">
+                {{ amount === cart.totalCents() ? 'Justo' : (amount | money) }}
+              </button>
+            }
+          </div>
+
+          @if (receivedInput() !== '') {
+            @if (missingCents() > 0) {
+              <div class="tot-row" style="color: var(--red); font-weight: 700; font-size: 15px">
+                <span>Falta</span>
+                <span class="num">{{ missingCents() | money }}</span>
+              </div>
+            } @else {
+              <div class="change-box">
+                <span>Cambio</span>
+                <span class="num">{{ changeCents() | money }}</span>
+              </div>
+            }
+          }
+        } @else {
+          <div class="fee-note">
+            <div class="tot-row">
+              <span>Venta</span>
+              <span class="num">{{ cart.baseCents() | money }}</span>
+            </div>
+            <div class="tot-row">
+              <span>Recargo por tarjeta ({{ cart.cardFeePct() }}%)</span>
+              <span class="num">+ {{ cart.cardFeeCents() | money }}</span>
+            </div>
+            <p class="cell-muted" style="font-size: 11.5px; margin-top: 6px; line-height: 1.4">
+              El recargo cubre la comisión del banco. No cuenta como ingreso del negocio.
+            </p>
+          </div>
+        }
+
+        @if (needsReason()) {
+          <div class="form-field" style="margin-top: 18px">
+            <label>¿Por qué cambia el precio?</label>
+            <input
+              type="text"
+              placeholder="Cliente frecuente, precio acordado…"
+              [ngModel]="cart.overrideReason()"
+              (ngModelChange)="cart.overrideReason.set($event)"
+            />
+            <span class="cell-muted">Queda registrado en la venta.</span>
+          </div>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" (click)="checkoutOpen.set(false)">Cancelar</button>
+        <button class="btn btn-primary" (click)="confirmSale()" >
+          {{ submitting() ? 'Registrando…' : 'Confirmar venta' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ MODAL: venta hecha ============ -->
+@if (lastSale(); as sale) {
+  @if (!detailOpen()) {
+    <div class="modal-overlay">
+      <div class="modal narrow">
+        <div class="modal-body" style="text-align: center; padding: 30px 24px">
+          <div class="success-check">✓</div>
+
+          <h2 style="font-size: 20px; margin-bottom: 4px">Venta registrada</h2>
+          <p class="cell-muted" style="margin-bottom: 16px">Nº {{ sale.number }}</p>
+
+          <div style="font-size: 32px; font-weight: 700; color: var(--gold-700); margin-bottom: 10px">
+            {{ sale.total_cents | money }}
+          </div>
+
+          @if (sale.payments && sale.payments.length && sale.payments[0].change_cents > 0) {
+            <div class="change-box" style="margin-bottom: 18px">
+              <span>Cambio</span>
+              <span class="num">{{ sale.payments[0].change_cents | money }}</span>
+            </div>
+          }
+
+          <div style="display: flex; flex-direction: column; gap: 9px; margin-top: 14px">
+            <button class="btn btn-secondary btn-block" (click)="showDetail()">Ver detalle</button>
+            <button class="btn btn-primary btn-block" (click)="newSale()">Nueva venta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <app-sale-detail [sale]="sale" (closed)="detailOpen.set(false)" />
+  }
+}

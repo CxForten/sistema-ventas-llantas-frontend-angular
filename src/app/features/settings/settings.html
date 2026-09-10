@@ -1,0 +1,112 @@
+<div class="page-head">
+  <div>
+    <h1>Configuración</h1>
+    <div class="sub">Datos del negocio y catálogo</div>
+  </div>
+</div>
+
+<div class="chip-row" style="margin-bottom: 20px">
+  <button class="chip" [class.active]="tab() === 'negocio'" (click)="tab.set('negocio')">Negocio</button>
+  <button class="chip" [class.active]="tab() === 'categorias'" (click)="tab.set('categorias')">Categorías</button>
+</div>
+
+@if (loading()) {
+  <div class="panel"><div class="panel-body"><div class="empty-state"><b>Cargando…</b></div></div></div>
+} @else if (tab() === 'negocio') {
+  <div class="panel" style="max-width: 720px">
+    <div class="panel-body">
+      @if (business(); as b) {
+        <div class="form-grid">
+          <div class="form-field full">
+            <label>Nombre del negocio</label>
+            <input type="text" [ngModel]="b.name" (ngModelChange)="patchBusiness('name', $event)" />
+            <span class="cell-muted">Es el que aparece en el menú y en los tickets.</span>
+          </div>
+
+          <div class="form-field">
+            <label>RUC</label>
+            <input type="text" [ngModel]="b.ruc" (ngModelChange)="patchBusiness('ruc', $event)" />
+          </div>
+
+          <div class="form-field">
+            <label>Teléfono</label>
+            <input type="text" [ngModel]="b.phone" (ngModelChange)="patchBusiness('phone', $event)" />
+          </div>
+
+          <div class="form-field full">
+            <label>Dirección</label>
+            <input type="text" [ngModel]="b.address" (ngModelChange)="patchBusiness('address', $event)" />
+          </div>
+
+          <div class="form-field full">
+            <label>Correo</label>
+            <input type="email" [ngModel]="b.email" (ngModelChange)="patchBusiness('email', $event)" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary" (click)="saveBusiness()" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (defaults(); as d) {
+    <div class="panel" style="max-width: 720px; margin-top: 16px">
+      <div class="panel-head"><h3>Cómo se calculan los precios</h3></div>
+      <div class="panel-body">
+        <div class="tot-row">
+          <span>Margen normal</span>
+          <span class="num cell-strong">{{ d.margin_main }}%</span>
+        </div>
+        <div class="tot-row">
+          <span>Margen rebajado</span>
+          <span class="num cell-strong">{{ d.margin_alt }}%</span>
+        </div>
+        <div class="tot-row">
+          <span>Recargo por pago con tarjeta</span>
+          <span class="num cell-strong">{{ d.card_fee_pct }}%</span>
+        </div>
+        <div class="tot-row">
+          <span>IVA</span>
+          <span class="num cell-strong">{{ d.iva_rate }}%</span>
+        </div>
+        <p class="cell-muted" style="margin-top: 12px">
+          Cada producto puede tener su propio margen. Estos son los valores que se usan cuando no
+          se especifica otro.
+        </p>
+      </div>
+    </div>
+  }
+} @else {
+  <div class="panel" style="max-width: 560px">
+    <div class="panel-head"><h3>Categorías del catálogo</h3></div>
+    <div class="panel-body">
+      <div style="display: flex; gap: 8px; margin-bottom: 18px">
+        <input
+          type="text"
+          placeholder="Nombre de la categoría"
+          style="flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-family: inherit"
+          [ngModel]="newCategory()"
+          (ngModelChange)="newCategory.set($event)"
+          (keyup.enter)="addCategory()"
+        />
+        <button class="btn btn-primary" (click)="addCategory()">Agregar</button>
+      </div>
+
+      @for (cat of categories(); track cat.id) {
+        <div class="tot-row" style="align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line)">
+          <span>
+            <b>{{ cat.name }}</b>
+            <span class="cell-muted"> · {{ cat.products_count ?? 0 }} productos</span>
+          </span>
+          <button class="btn btn-ghost btn-sm" style="color: var(--red)" (click)="removeCategory(cat)">
+            Eliminar
+          </button>
+        </div>
+      } @empty {
+        <div class="empty-state"><b>Sin categorías</b>Crea la primera arriba.</div>
+      }
+    </div>
+  </div>
+}
