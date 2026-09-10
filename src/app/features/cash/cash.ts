@@ -19,6 +19,7 @@ export class Cash {
   auth = inject(Auth);
 
   session = signal<CashSession | null>(null);
+  sessions = signal<CashSession[]>([]);
   summary = signal<CashSummary | null>(null);
   loading = signal(true);
   busy = signal(false);
@@ -41,12 +42,18 @@ export class Cash {
     this.refresh();
   }
 
-  async refresh(): Promise<void> {
+    async refresh(): Promise<void> {
     this.loading.set(true);
     try {
-      const res = await this.api.current();
-      this.session.set(res.data);
-      this.summary.set(res.live ?? null);
+      const [current, history] = await Promise.all([
+        this.api.current(),
+        this.api.list(),
+      ]);
+
+      this.session.set(current.data);
+      this.summary.set(current.live ?? null);
+
+      this.sessions.set(history.data.filter((s) => s.status === 'closed'));
     } catch (err) {
       this.toast.fromHttpError(err, 'No se pudo consultar la caja.');
     } finally {
@@ -100,5 +107,9 @@ export class Cash {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  cashSalesOf(session: CashSession): number {
+    return session.expected_cents - session.opening_cents;
   }
 }

@@ -115,7 +115,7 @@
           </button>
         </div>
 
-        <div class="tot-row" style="align-items: center; padding-top: 8px">
+        <!-- <div class="tot-row" style="align-items: center; padding-top: 8px">
           <span>Descuento</span>
           <span class="disc-field">
             $
@@ -126,7 +126,7 @@
               (input)="onDiscountInput($any($event.target).value)"
             />
           </span>
-        </div>
+        </div> -->
 
         <!-- ============ TOTAL EDITABLE ============ -->
         <div class="led-total led-editable">
@@ -213,11 +213,9 @@
         <div class="form-field" style="margin-bottom: 8px"><label>¿Cómo paga?</label></div>
         <div class="pay-pick">
           <button class="pay-opt" [class.sel]="cart.paymentMethod() === 'efectivo'" (click)="setMethod('efectivo')">
-            <span class="pay-ic">💵</span>
             <span>Efectivo</span>
           </button>
           <button class="pay-opt" [class.sel]="cart.paymentMethod() === 'tarjeta'" (click)="setMethod('tarjeta')">
-            <span class="pay-ic">💳</span>
             <span>Tarjeta</span>
           </button>
         </div>
@@ -234,13 +232,7 @@
             />
           </div>
 
-          <div class="chip-row" style="margin-bottom: 14px">
-            @for (amount of suggestedAmounts(); track amount) {
-              <button class="chip" (click)="quickAmount(amount)">
-                {{ amount === cart.totalCents() ? 'Justo' : (amount | money) }}
-              </button>
-            }
-          </div>
+          
 
           @if (receivedInput() !== '') {
             @if (missingCents() > 0) {

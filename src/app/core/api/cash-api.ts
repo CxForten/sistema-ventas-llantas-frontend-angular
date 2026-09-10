@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { CashSession, CashSummary } from '../models';
+import { CashSession, CashSummary, Paginated } from '../models';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root'})
@@ -17,6 +17,12 @@ export class CashApi {
     
     close(counted_cents: number, notes?: string): Promise<{message:string; data: CashSession; summary: CashSummary;}>{
         return firstValueFrom(this.http.post<any>('/api/cash-sessions/close', {counted_cents, notes}))
+    }
+
+    list(perPage = 30): Promise<Paginated<CashSession>> {
+        const params = new HttpParams().set('per_page', String(perPage));
+        return firstValueFrom(this.http.get<Paginated<CashSession>>('/api/cash-sessions', {params})
+    );
     }
 
 

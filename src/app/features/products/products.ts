@@ -1,3 +1,4 @@
+import { SettingsApi } from './../../core/api/settings-api';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -18,6 +19,7 @@ export class Products {
   private api = inject(ProductsApi);
   private categoriesApi = inject(CategoriesApi);
   private toast = inject(Toast);
+  private settingsApi = inject(SettingsApi);
   auth = inject(Auth);
 
   products = signal<Product[]>([]);
@@ -37,9 +39,7 @@ export class Products {
     spec: '',
     category_id: null as number | null,
     cost: '',
-    margin_pct: 25,
     stock: 0,
-    min_stock: 3,
   });
 
   /* --- Modal de ajuste de inventario --- */
@@ -52,21 +52,38 @@ export class Products {
   kardexProduct = signal<Product | null>(null);
   movements = signal<StockMovement[]>([]);
 
+   marginMain = signal(25);
+  marginAlt = signal(20);
+ 
+  private async loadMargins(): Promise<void> {
+    try {
+      const res = await this.settingsApi.get();
+      this.marginMain.set(res.defaults.margin_main);
+      this.marginAlt.set(res.defaults.margin_alt);
+    } catch {
+      // Quedan 25 y 20 por defecto
+    }
+  }
+ 
   readonly canSeeCost = computed(() => this.auth.can('products.cost'));
-
-  /** Precio de venta en vivo mientras se escribe el costo. */
-  readonly previewPrice = computed(() => {
-    const cents = Money.toCents(this.form().cost);
-    return Money.withMargin(cents, this.form().margin_pct);
-  });
-
+  
+  readonly previewMain = computed(() =>
+      Money.withMargin(Money.toCents(this.form().cost), this.marginMain())
+    );
+ 
+  readonly previewAlt = computed(() =>
+    Money.withMargin(Money.toCents(this.form().cost), this.marginAlt())
+  );
+ 
   constructor() {
     this.loadCategories();
+    this.loadMargins();
 
     effect(() => {
       const search = this.search();
       const categoryId = this.categoryFilter();
       this.load(search, categoryId);
+      this.load(this.search(), this.categoryFilter())
     });
   }
 
@@ -106,9 +123,7 @@ export class Products {
       spec: '',
       category_id: this.categories()[0]?.id ?? null,
       cost: '',
-      margin_pct: 25,
       stock: 0,
-      min_stock: 3,
     });
     this.modalOpen.set(true);
   }
@@ -122,9 +137,7 @@ export class Products {
       spec: product.spec ?? '',
       category_id: product.category_id,
       cost: Money.format(product.cost_cents ?? 0),
-      margin_pct: product.margin_pct,
       stock: product.stock,
-      min_stock: product.min_stock,
     });
     this.modalOpen.set(true);
   }
@@ -158,8 +171,6 @@ export class Products {
       spec: f.spec.trim() || null,
       category_id: f.category_id,
       cost_cents: Money.toCents(f.cost),
-      margin_pct: f.margin_pct,
-      min_stock: f.min_stock,
       active: true,
       track_stock: true,
     };
@@ -260,4 +271,6 @@ export class Products {
     };
     return labels[type] ?? type;
   }
+
+  
 }

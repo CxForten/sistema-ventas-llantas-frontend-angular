@@ -147,3 +147,46 @@
     </div>
   </div>
 }
+
+        @if (sessions().length) {
+        <div class="panel" style="margin-top: 16px">
+        <div class="panel-head">
+          <h3>Cierres anteriores</h3>
+          <span class="cell-muted">{{ sessions().length }} registrados</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Apertura</th>
+                <th>Cierre</th>
+                <th class="cell-right">Base</th>
+                <th class="cell-right">Ventas efectivo</th>
+                <th class="cell-right">Esperado</th>
+                <th class="cell-right">Contado</th>
+                <th class="cell-right">Diferencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of sessions(); track s.id) {
+                <tr>
+                  <td class="cell-muted">{{ s.opened_at | date: 'dd/MM/yy HH:mm' }}</td>
+                  <td class="cell-muted">{{ s.closed_at | date: 'dd/MM/yy HH:mm' }}</td>
+                  <td class="cell-right num">{{ s.opening_cents | money }}</td>
+                  <td class="cell-right num">{{ cashSalesOf(s) | money }}</td>
+                  <td class="cell-right num">{{ s.expected_cents | money }}</td>
+                  <td class="cell-right num">{{ s.counted_cents | money }}</td>
+                  <td class="cell-right num cell-strong" [style.color]="
+                      s.difference_cents === 0 ? 'var(--green)'
+                      : (s.difference_cents ?? 0) < 0 ? 'var(--red)'
+                      : 'var(--blue)'">
+                    {{ s.difference_cents | money }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      }
+

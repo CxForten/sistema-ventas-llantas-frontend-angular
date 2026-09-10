@@ -1,7 +1,6 @@
 <div class="page-head">
   <div>
     <h1>Resumen</h1>
-    <div class="sub">Cómo va el negocio hoy</div>
   </div>
 </div>
 
@@ -21,7 +20,7 @@
     <div class="kpi is-key">
       <div class="k-label">Ingreso del negocio</div>
       <div class="k-val num">{{ d.today.income_cents | money }}</div>
-      <div class="k-note">sin el recargo de tarjeta</div>
+      <div class="k-note">sin recargo de tarjeta</div>
     </div>
 
     @if (auth.can('products.cost')) {
@@ -120,39 +119,101 @@
     </div>
   </div>
 
-  <!-- ============ RANKINGS ============ -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px">
-    <div class="panel">
-      <div class="panel-head"><h3>Lo que más sale</h3></div>
-      <div class="panel-body">
-        @for (item of topProducts(); track item.sku) {
-          <div class="tot-row">
-            <span>{{ item.name }}</span>
-            <span class="num cell-strong">{{ item.qty }}</span>
-          </div>
-        } @empty {
-          <div class="empty-state"><b>Sin datos todavía</b></div>
-        }
-      </div>
+  <div class="rank-grid">
+  <!-- ============ PRODUCTOS MÁS VENDIDOS ============ -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Lo que más sale</h3>
+      <span class="cell-muted">unidades</span>
     </div>
-
-    <div class="panel">
-      <div class="panel-head"><h3>Medidas más rotadas</h3></div>
-      <div class="panel-body">
-        @for (spec of topSpecs(); track spec.spec) {
-          <div class="tot-row">
-            <span>{{ spec.spec }}</span>
-            <span class="num cell-strong">{{ spec.qty }}</span>
+    <div class="panel-body">
+      @for (item of topProducts(); track item.sku; let i = $index) {
+        <div class="rank-row">
+          <span class="rank-no">{{ i + 1 }}</span>
+          <span class="rank-name" [title]="item.name">{{ item.name }}</span>
+          <div class="rank-track">
+            <div class="rank-fill" [style.width]="barPct(item.qty, maxProductQty())"></div>
           </div>
-        } @empty {
-          <div class="empty-state"><b>Sin llantas vendidas aún</b></div>
-        }
-      </div>
+          <span class="rank-val num">{{ item.qty }}</span>
+        </div>
+      } @empty {
+        <div class="empty-state"><b>Sin datos todavía</b>Los productos aparecen al vender.</div>
+      }
     </div>
   </div>
 
+  <!-- ============ MÉTODOS DE PAGO ============ -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Métodos de pago</h3>
+      <span class="cell-muted">últimos 30 días</span>
+    </div>
+    <div class="panel-body">
+      @for (m of salesReport()?.by_method ?? []; track m.method) {
+        <div class="rank-row">
+          <span class="rank-name is-wide">{{ methodLabel(m.method) }}</span>
+          <div class="rank-track">
+            <div
+              class="rank-fill"
+              [class.is-card]="m.method === 'tarjeta'"
+              [class.is-cash]="m.method === 'efectivo'"
+              [style.width]="barPct(m.total_cents, maxMethodCents())"
+            ></div>
+          </div>
+          <span class="rank-val num is-money">{{ m.total_cents | money }}</span>
+        </div>
+      } @empty {
+        <div class="empty-state"><b>Sin ventas en el periodo</b></div>
+      }
+    </div>
+  </div>
+
+  <!-- ============ MEDIDAS DE LLANTA ============ -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Medidas más rotadas</h3>
+      <span class="cell-muted">unidades</span>
+    </div>
+    <div class="panel-body">
+      @for (spec of topSpecs(); track spec.spec; let i = $index) {
+        <div class="rank-row">
+          <span class="rank-no">{{ i + 1 }}</span>
+          <span class="rank-name">{{ spec.spec }}</span>
+          <div class="rank-track">
+            <div class="rank-fill" [style.width]="barPct(spec.qty, maxSpecQty())"></div>
+          </div>
+          <span class="rank-val num">{{ spec.qty }}</span>
+        </div>
+      } @empty {
+        <div class="empty-state"><b>Sin llantas vendidas aún</b>Aparecen al vender productos de la categoría Llantas.</div>
+      }
+    </div>
+  </div>
+
+  <!-- ============ LÍNEA DE NEGOCIO ============ -->
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Ingreso por línea de negocio</h3>
+      <span class="cell-muted">últimos 30 días</span>
+    </div>
+    <div class="panel-body">
+      @for (c of salesReport()?.by_category ?? []; track c.category) {
+        <div class="rank-row">
+          <span class="rank-name is-wide">{{ c.category }}</span>
+          <div class="rank-track">
+            <div class="rank-fill" [style.width]="barPct(c.total_cents, maxCategoryCents())"></div>
+          </div>
+          <span class="rank-val num is-money">{{ c.total_cents | money }}</span>
+        </div>
+      } @empty {
+        <div class="empty-state"><b>Sin datos todavía</b></div>
+      }
+    </div>
+  </div>
+</div>
+
   <!-- ============ STOCK BAJO ============ -->
-  @if (d.low_stock.length) {
+  <!-- @if (d.low_stock.length) {
     <div class="panel">
       <div class="panel-head">
         <h3>Se está acabando</h3>
@@ -186,7 +247,7 @@
         </table>
       </div>
     </div>
-  }
+  } -->
 }
 
 <!-- ============ MODAL: ventas de un día ============ -->

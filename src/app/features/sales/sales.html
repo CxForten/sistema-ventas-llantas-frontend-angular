@@ -3,7 +3,11 @@
     <h1>Ventas</h1>
     <div class="sub">Historial de transacciones</div>
   </div>
+  <button class="btn btn-secondary" (click)="exportCsv()" [disabled]="exporting()">
+    {{ exporting() ? 'Exportando…' : 'Exportar a Excel' }}
+  </button>
 </div>
+
 
 <div class="toolbar">
   <div class="search-input">

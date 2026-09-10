@@ -112,30 +112,27 @@ button { font-family: inherit; cursor: pointer; }
 .brand { display: flex; align-items: center; gap: 11px; padding: 20px 18px 16px; }
 
 /* El planeta del logo, reducido a su forma esencial: disco con anillo. */
-.brand-mark {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--planet);
-  position: relative; flex-shrink: 0;
-  box-shadow: 0 0 0 1px rgba(244, 217, 138, .25);
-}
-.brand-mark::after {
-  content: ""; position: absolute; left: -6px; right: -6px; top: 50%;
-  height: 7px; margin-top: -3px;
-  border: 1.5px solid var(--gold-300);
-  border-radius: 50%;
-  transform: rotate(-18deg);
-  opacity: .85;
+.brand {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 16px 14px;
 }
 
-.brand-text b {
+.brand-logo {
+  width: 100%;
+  max-width: 168px;
+  height: auto;
   display: block;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 19px; font-weight: 700; letter-spacing: .03em;
-  color: var(--steel-100); line-height: 1.05;
+  /* Los bordes oscuros del logo se pierden sobre el grafito */
+  filter: drop-shadow(0 0 1px rgba(244, 217, 138, .35));
 }
-.brand-text span {
-  display: block; font-size: 10px; color: var(--graphite-400);
-  letter-spacing: .16em; text-transform: uppercase; margin-top: 2px;
+
+.brand-sub {
+  font-size: 9.5px;
+  color: var(--graphite-400);
+  letter-spacing: .18em;
+  text-transform: uppercase;
 }
 
 .nav { flex: 1; overflow-y: auto; padding: 6px 11px; }
@@ -724,3 +721,128 @@ tbody tr:hover { background: var(--bg-app); }
   font-size: 32px;
   margin: 0 auto 18px;
 }
+
+/* ============================================================
+   RANKINGS CON BARRA — agregar al final de src/styles.scss
+   ============================================================ */
+
+.rank-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: start;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 0;
+}
+.rank-row + .rank-row { border-top: 1px solid var(--line); }
+
+.rank-no {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--bg-app);
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* El primero se destaca: es la información que el dueño busca primero. */
+.rank-row:first-child .rank-no {
+  background: var(--gold-050);
+  color: var(--gold-700);
+}
+
+.rank-name {
+  width: 130px;
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rank-name.is-wide { width: 108px; }
+
+.rank-track {
+  flex: 1;
+  min-width: 40px;
+  height: 8px;
+  background: var(--bg-app);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.rank-fill {
+  height: 100%;
+  border-radius: 20px;
+  background: var(--planet);
+  transition: width .5s cubic-bezier(.2, .8, .2, 1);
+}
+
+/* Los métodos de pago usan el mismo color que sus etiquetas en las tablas,
+   para que se lean igual en toda la app. */
+.rank-fill.is-cash { background: var(--green); }
+.rank-fill.is-card { background: var(--blue); }
+
+.rank-val {
+  min-width: 34px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.rank-val.is-money { min-width: 72px; }
+
+@media (max-width: 1100px) {
+  .rank-grid { grid-template-columns: 1fr; }
+  .rank-name { width: 100px; }
+}
+
+.calc-prices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.calc-box {
+  background: var(--gold-050);
+  border: 1px solid #F0DEB4;
+  border-radius: var(--radius);
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* El alterno queda apagado: es el precio de excepción, no el de todos los días. */
+.calc-box.alt {
+  background: var(--bg-app);
+  border-color: var(--line);
+}
+
+.calc-box .c-lbl {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.calc-box .c-val {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--gold-700);
+}
+.calc-box.alt .c-val { color: var(--ink); }
+

@@ -1,7 +1,7 @@
 import { SaleDetail } from './../../core/ui/sale-detail';
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ReportsApi, TopProduct, TopSpec } from '../../core/api/reports-api';
+import { ReportsApi, SalesReport, TopProduct, TopSpec } from '../../core/api/reports-api';
 import { SalesApi } from '../../core/api/sales-api';
 import { Toast } from '../../core/ui/toast';
 import { Auth } from '../../core/auth/auth';
@@ -30,6 +30,7 @@ export class Dashboard {
   data = signal<DashboardData | null>(null);
   topProducts = signal<TopProduct[]>([]);
   topSpecs = signal<TopSpec[]>([]);
+  salesReport = signal<SalesReport | null>(null);
   recentSales = signal<Sale[]>([]);
   loading = signal(true);
 
@@ -57,6 +58,24 @@ export class Dashboard {
     };
   });
 
+   readonly maxProductQty = computed(() =>
+    Math.max(1, ...this.topProducts().map((p) => p.qty))
+  );
+
+  readonly maxSpecQty = computed(() =>
+    Math.max(1, ...this.topSpecs().map((s) => s.qty))
+  );
+
+  readonly maxMethodCents = computed(() =>
+    Math.max(1, ...(this.salesReport()?.by_method ?? []).map((m) => m.total_cents))
+  );
+
+  readonly maxCategoryCents = computed(() =>
+    Math.max(1, ...(this.salesReport()?.by_category ?? []).map((c) => c.total_cents))
+  );
+
+
+
   constructor() {
     this.load();
   }
@@ -83,26 +102,30 @@ export class Dashboard {
     return labels[method] ?? method;
   }
 
-  private async load(): Promise<void> {
+   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const [dashboard, products, specs, recent] = await Promise.all([
+      const [dashboard, products, specs, recent, report] = await Promise.all([
         this.api.dashboard(),
         this.api.topProducts(),
         this.api.topSpec(),
         this.salesApi.list({ per_page: 6 }),
+        this.api.sales(),
       ]);
 
       this.data.set(dashboard);
       this.topProducts.set(products.data);
       this.topSpecs.set(specs.data);
       this.recentSales.set(recent.data);
+      this.salesReport.set(report);
     } catch (err) {
       this.toast.fromHttpError(err, 'No se pudieron cargar los reportes.');
     } finally {
       this.loading.set(false);
     }
   }
+
+
 
   /** Abre el detalle de un día al tocar su barra. */
   async openDay(day: DaySeries): Promise<void> {
@@ -145,5 +168,12 @@ export class Dashboard {
   closeSale(): void {
     this.saleDetail.set(null);
   }
+
+    barPct(value: number, max: number): string {
+    return Math.max(3, (value / max) * 100) + '%';
+  }
+
+
+  
 
 }

@@ -98,93 +98,83 @@
 
       <div class="modal-body">
         <div class="form-grid">
-          <div class="form-field full">
-            <label>Nombre</label>
-            <input
-              type="text"
-              placeholder="Llanta 185/65 R15 Michelin Energy XM2+"
-              [ngModel]="form().name"
-              (ngModelChange)="patch('name', $event)"
-            />
-          </div>
-
-          <div class="form-field">
-            <label>Código (SKU)</label>
-            <input type="text" placeholder="LLA-002" [ngModel]="form().sku" (ngModelChange)="patch('sku', $event)" />
-          </div>
-
-          <div class="form-field">
-            <label>Categoría</label>
-            <select [ngModel]="form().category_id" (ngModelChange)="patch('category_id', +$event)">
-              @for (cat of categories(); track cat.id) {
-                <option [value]="cat.id">{{ cat.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label>Marca</label>
-            <input type="text" placeholder="Michelin" [ngModel]="form().brand" (ngModelChange)="patch('brand', $event)" />
-          </div>
-
-          <div class="form-field">
-            <label>Medida o especificación</label>
-            <input
-              type="text"
-              placeholder="185/65 R15 88H"
-              [ngModel]="form().spec"
-              (ngModelChange)="patch('spec', $event)"
-            />
-          </div>
-
-          <div class="form-field">
-            <label>Precio de costo</label>
-            <input
-              type="text"
-              inputmode="decimal"
-              placeholder="72.00"
-              [ngModel]="form().cost"
-              (ngModelChange)="patch('cost', $event)"
-            />
-          </div>
-
-          <div class="form-field">
-            <label>Margen de ganancia (%)</label>
-            <input
-              type="number"
-              min="0"
-              max="200"
-              [ngModel]="form().margin_pct"
-              (ngModelChange)="patch('margin_pct', +$event)"
-            />
-          </div>
-
-          <div class="form-field full">
-            <label>Precio de venta</label>
-            <div class="led-total">
-              <span class="led-label">Se cobra</span>
-              <span class="led-val">{{ previewPrice() | money }}</span>
-            </div>
-          </div>
-
-          @if (!editing()) {
-            <div class="form-field">
-              <label>Stock inicial</label>
-              <input type="number" min="0" [ngModel]="form().stock" (ngModelChange)="patch('stock', +$event)" />
-            </div>
-          } @else {
-            <div class="form-field">
-              <label>Stock actual</label>
-              <input type="number" [value]="editing()!.stock" disabled />
-              <span class="cell-muted">Se cambia desde Ajustar</span>
-            </div>
-          }
-
-          <div class="form-field">
-            <label>Avisar cuando queden menos de</label>
-            <input type="number" min="0" [ngModel]="form().min_stock" (ngModelChange)="patch('min_stock', +$event)" />
-          </div>
-        </div>
+  <div class="form-field full">
+    <label>Nombre</label>
+    <input
+      type="text"
+      placeholder="Llanta 185/65 R15 Michelin Energy XM2+"
+      [ngModel]="form().name"
+      (ngModelChange)="patch('name', $event)"
+    />
+  </div>
+ 
+  <div class="form-field">
+    <label>Código (SKU)</label>
+    <input type="text" placeholder="LLA-002" [ngModel]="form().sku" (ngModelChange)="patch('sku', $event)" />
+  </div>
+ 
+  <div class="form-field">
+    <label>Categoría</label>
+    <select [ngModel]="form().category_id" (ngModelChange)="patch('category_id', +$event)">
+      @for (cat of categories(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+  </div>
+ 
+  <div class="form-field">
+    <label>Marca</label>
+    <input type="text" placeholder="Michelin" [ngModel]="form().brand" (ngModelChange)="patch('brand', $event)" />
+  </div>
+ 
+  <div class="form-field">
+    <label>Medida o especificación</label>
+    <input
+      type="text"
+      placeholder="185/65 R15 88H"
+      [ngModel]="form().spec"
+      (ngModelChange)="patch('spec', $event)"
+    />
+  </div>
+ 
+  <div class="form-field">
+    <label>Precio de costo</label>
+    <input
+      type="text"
+      inputmode="decimal"
+      placeholder="0.00"
+      [ngModel]="form().cost"
+      (ngModelChange)="patch('cost', $event)"
+    />
+  </div>
+ 
+  @if (!editing()) {
+    <div class="form-field">
+      <label>Stock</label>
+      <input type="number" min="0" [ngModel]="form().stock" (ngModelChange)="patch('stock', +$event)" />
+    </div>
+  } @else {
+    <div class="form-field">
+      <label>Stock actual</label>
+      <input type="number" [value]="editing()!.stock" disabled />
+      <span class="cell-muted">Se cambia desde Ajustar</span>
+    </div>
+  }
+ 
+  <div class="form-field full">
+    <label>Precios de venta calculados</label>
+    <div class="calc-prices">
+      <div class="calc-box">
+        <span class="c-lbl">Costo + {{ marginMain() }}%</span>
+        <span class="c-val num">{{ previewMain() | money }}</span>
+      </div>
+      <div class="calc-box alt">
+        <span class="c-lbl">Costo + {{ marginAlt() }}%</span>
+        <span class="c-val num">{{ previewAlt() | money }}</span>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
 
       <div class="modal-foot">
