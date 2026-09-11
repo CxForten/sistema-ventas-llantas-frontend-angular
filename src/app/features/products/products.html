@@ -56,11 +56,13 @@
             }
             <td class="cell-right num cell-strong">{{ p.price_cents | money }}</td>
             <td class="cell-right num">
-              {{ p.stock }}
               @if (p.is_out) {
-                <div class="badge badge-red">Sin stock</div>
-              } @else if (p.is_low) {
-                <div class="badge badge-amber">Bajo</div>
+                <span class="badge badge-red">Sin stock</span>
+              } @else {
+                {{ p.stock }}
+                @if (p.is_low) {
+                  <div class="badge badge-amber" style="margin-top: 3px">Quedan pocas</div>
+                }
               }
             </td>
             <td>

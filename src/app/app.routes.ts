@@ -19,6 +19,7 @@ export const routes: Routes = [
             { path: 'ventas', loadComponent: () => import('./features/sales/sales').then((m) => m.Sales)},
             { path: 'caja', loadComponent: () => import('./features/cash/cash').then((m) => m.Cash)},
             { path: 'configuracion', loadComponent: () => import('./features/settings/settings').then((m) => m.Settings)},
+            { path: 'movimientos', loadComponent: () => import('./features/movements/movements').then((m) => m.Movements)}
         ],
     },
 

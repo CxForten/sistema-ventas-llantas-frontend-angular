@@ -140,6 +140,11 @@ export interface StockMovement {
   reference_id: number | null;
   user: string | null;
   created_at: string;
+  product?: {
+    id?: number;
+    name?: string | null;
+    sku?: string | null;
+  } | null
 }
 
 export interface DashboardTotals {

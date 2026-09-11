@@ -18,6 +18,7 @@ export class Shell {
     { path: '/pos',                 label: 'Vender',              group: 'Operación'},
     { path: '/caja',                label: 'Caja',                group: 'Operación'},
     { path: '/productos',           label: 'Inventario',          group: 'Catálogo'},
+    { path: '/movimientos',           label: 'Movimientos',       group: 'Catálogo'},
     { path: '/ventas',              label: 'Ventas',              group: 'Administración'},
     { path: '/configuracion',       label: 'Configuracion',       group: 'Administración'},
   ];
