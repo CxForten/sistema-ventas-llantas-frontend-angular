@@ -20,27 +20,52 @@ export interface Defaults {
   margin_alt: number;
   card_fee_pct: number;
   iva_rate: number;
-  calc_order: string;
+  calc_order: 'discount_first' | 'fee_first';
+  require_cash_session: boolean;
 }
 
 export interface SettingsResponse {
   business: BusinessSettings;
   defaults: Defaults;
-  settings: Record<string, unknown>;
+  factory: Defaults;
 }
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class SettingsApi {
-    private http = inject(HttpClient);
+  private http = inject(HttpClient);
 
-    get(): Promise<SettingsResponse>{
-        return firstValueFrom(this.http.get<SettingsResponse>('/api/settings'));
-    }
+  get(): Promise<SettingsResponse> {
+    return firstValueFrom(this.http.get<SettingsResponse>('/api/settings'));
+  }
 
-    update(payload: {
-        business?: Partial<BusinessSettings>;
-        settings?: Record<string, unknown>;
-    }): Promise<{message: string; business: BusinessSettings; settings: Record<string, unknown>}> {
-        return firstValueFrom(this.http.put<any>('/api/settings', payload))
-    }
+  update(payload: {
+    business?: Partial<BusinessSettings>;
+    settings?: Partial<Defaults>;
+  }): Promise<{ message: string; business: BusinessSettings; defaults: Defaults }> {
+    return firstValueFrom(this.http.put<any>('/api/settings', payload));
+  }
+
+  /* ============ Respaldo ============ */
+
+  exportBackup(): Promise<unknown> {
+    return firstValueFrom(this.http.get('/api/backup/export'));
+  }
+
+  importBackup(payload: unknown): Promise<{ message: string }> {
+    return firstValueFrom(
+      this.http.post<{ message: string }>('/api/backup/import', {
+        confirm: 'REEMPLAZAR',
+        payload,
+      })
+    );
+  }
+
+  reset(scope: 'ventas' | 'todo'): Promise<{ message: string }> {
+    return firstValueFrom(
+      this.http.post<{ message: string }>('/api/backup/reset', {
+        confirm: 'BORRAR',
+        scope,
+      })
+    );
+  }
 }

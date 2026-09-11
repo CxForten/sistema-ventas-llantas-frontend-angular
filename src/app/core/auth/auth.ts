@@ -61,4 +61,16 @@ export class Auth {
         if (!raw) return null;
         try {return JSON.parse(raw) as User; } catch {return null;}
     }
+
+    async refresh(): Promise<void> {
+    if (!this.token()) return;
+
+    try {
+      const res = await firstValueFrom(this.http.get<{ data: User }>('/api/me'));
+      localStorage.setItem(USER_KEY, JSON.stringify(res.data));
+      this.user.set(res.data);
+    } catch {
+      // Si falla, seguimos con lo que hay guardado en localStorage
+    }
+  }
 }

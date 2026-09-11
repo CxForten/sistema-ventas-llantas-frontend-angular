@@ -195,7 +195,7 @@
       <div class="modal-body">
         <!-- Total, también editable aquí -->
         <div style="text-align: center; margin-bottom: 22px">
-          <div class="k-label" style="margin-bottom: 6px">Total a pagar</div>
+          <div class="k-label" style="margin-bottom: 6px">{{ cart.paymentMethod() === 'tarjeta' ? 'Precio de la venta' : 'Total a pagar' }}</div>
           <input
             class="total-big num"
             type="text"
@@ -279,7 +279,7 @@
 
       <div class="modal-foot">
         <button class="btn btn-secondary" (click)="checkoutOpen.set(false)">Cancelar</button>
-        <button class="btn btn-primary" (click)="confirmSale()" >
+        <button class="btn btn-primary" (click)="confirmSale()" [disabled]="!canConfirm() || submitting()">
           {{ submitting() ? 'Registrando…' : 'Confirmar venta' }}
         </button>
       </div>

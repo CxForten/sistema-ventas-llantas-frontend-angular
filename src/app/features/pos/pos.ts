@@ -58,6 +58,16 @@ export class Pos {
 
   readonly needsReason = computed(() => this.cart.isOverridden());
 
+  readonly canConfirm = computed(() => {
+  if (this.cart.lines().length === 0) return false;
+
+  if (this.cart.paymentMethod() === 'efectivo') {
+    if (this.receivedInput() === '') return false;
+    if (Money.toCents(this.receivedInput()) < this.cart.totalCents()) return false;
+  }
+
+  return true;
+});
 
   constructor() {
     this.checkCash();
@@ -83,6 +93,7 @@ export class Pos {
     try {
       const res = await this.settingsApi.get();
       this.cart.cardFeePct.set(res.defaults.card_fee_pct);
+      this.cart.marginAltPct.set(res.defaults.margin_alt);
     } catch {
       // Queda el 15% por defecto del store
     }
@@ -169,6 +180,7 @@ export class Pos {
   }
 
   async confirmSale(): Promise<void> {
+    if (this.submitting() || !this.canConfirm()) return;
     this.submitting.set(true);
 
     const payload: CreateSalePayload = {
@@ -186,7 +198,7 @@ export class Pos {
     }
 
     if (this.cart.isOverridden()) {
-      payload.override_total_cents = this.cart.totalCents();
+      payload.override_total_cents = this.cart.baseCents();
       payload.override_reason = this.cart.overrideReason().trim();
     }
 

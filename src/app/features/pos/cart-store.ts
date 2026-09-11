@@ -49,12 +49,21 @@ export class CartStore {
     this.lines().reduce((a, l) => a + this.unitPrice(l.product) * l.qty, 0)
   );
 
+  readonly marginAltPct = signal(20);
+
   /** Subtotal con el margen alterno, para mostrarlo en el selector. */
   readonly altSubtotalCents = computed(() =>
-    this.lines().reduce((a, l) => a + Money.withMargin(l.product.cost_cents ?? 0, 20) * l.qty, 0)
-  );
+  this.lines().reduce(
+    (a, l) => a + Money.withMargin(l.product.cost_cents ?? 0, this.marginAltPct()) * l.qty,
+    0
+  )
+);
 
-  readonly baseCents = computed(() => Math.max(0, this.subtotalCents() - this.discountCents()));
+  readonly baseCents = computed(() => {
+      const override = this.overrideTotalCents();
+      if (override !== null) return override;
+      return Math.max(0, this.subtotalCents() - this.discountCents());
+    });
 
   /** Lo que se lleva el banco. Se calcula sobre la base, no sobre el total editado. */
   readonly cardFeeCents = computed(() =>
@@ -67,11 +76,13 @@ export class CartStore {
   readonly computedTotalCents = computed(() => this.baseCents() + this.cardFeeCents());
 
   /** El total real a cobrar. */
-  readonly totalCents = computed(() => this.overrideTotalCents() ?? this.computedTotalCents());
+  readonly totalCents = computed(() => this.baseCents() + this.cardFeeCents());
 
-  readonly isOverridden = computed(
-    () => this.overrideTotalCents() !== null && this.overrideTotalCents() !== this.computedTotalCents()
-  );
+  readonly isOverridden = computed(() => {
+    const override = this.overrideTotalCents();
+    if (override === null) return false;
+    return override !== Math.max(0, this.subtotalCents() - this.discountCents());
+  });
 
   /** El recargo de tarjeta no es del negocio. */
   readonly incomeCents = computed(() => this.totalCents() - this.cardFeeCents());
