@@ -913,3 +913,4 @@ tbody tr:hover { background: var(--bg-app); }
 .danger-zone b { color: var(--red); font-size: 14px; display: block; margin-bottom: 4px; }
 .danger-zone p { font-size: 12.5px; max-width: 620px; line-height: 1.5; }
 
+.prod-card:disabled .prod-price { color: var(--muted); }

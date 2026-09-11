@@ -20,14 +20,14 @@
     <div class="kpi is-key">
       <div class="k-label">Ingreso del negocio</div>
       <div class="k-val num">{{ d.today.income_cents | money }}</div>
-      <div class="k-note">sin recargo de tarjeta</div>
+      <!-- <div class="k-note">sin recargo de tarjeta</div> -->
     </div>
 
     @if (auth.can('products.cost')) {
       <div class="kpi">
         <div class="k-label">Ganancia</div>
         <div class="k-val num">{{ d.today.margin_cents | money }}</div>
-        <div class="k-note">no descuenta arriendo ni sueldos</div>
+        <!-- <div class="k-note">no descuenta arriendo ni sueldos</div> -->
       </div>
     }
 
@@ -44,7 +44,7 @@
   <div class="panel" style="margin-bottom: 16px">
     <div class="panel-head">
       <h3>Ventas de la semana</h3>
-      <span class="cell-muted">toca un día para ver sus ventas</span>
+      <!-- <span class="cell-muted">toca un día para ver sus ventas</span> -->
     </div>
     <div class="panel-body">
       <div style="display: flex; align-items: flex-end; gap: 12px; height: 190px; padding-top: 10px">
@@ -124,7 +124,7 @@
   <div class="panel">
     <div class="panel-head">
       <h3>Lo que más sale</h3>
-      <span class="cell-muted">unidades</span>
+      <!-- <span class="cell-muted">unidades</span> -->
     </div>
     <div class="panel-body">
       @for (item of topProducts(); track item.sku; let i = $index) {
@@ -146,7 +146,7 @@
   <div class="panel">
     <div class="panel-head">
       <h3>Métodos de pago</h3>
-      <span class="cell-muted">últimos 30 días</span>
+      <!-- <span class="cell-muted">últimos 30 días</span> -->
     </div>
     <div class="panel-body">
       @for (m of salesReport()?.by_method ?? []; track m.method) {
@@ -172,7 +172,7 @@
   <div class="panel">
     <div class="panel-head">
       <h3>Medidas más rotadas</h3>
-      <span class="cell-muted">unidades</span>
+      <!-- <span class="cell-muted">unidades</span> -->
     </div>
     <div class="panel-body">
       @for (spec of topSpecs(); track spec.spec; let i = $index) {
@@ -194,7 +194,7 @@
   <div class="panel">
     <div class="panel-head">
       <h3>Ingreso por línea de negocio</h3>
-      <span class="cell-muted">últimos 30 días</span>
+      <!-- <span class="cell-muted">últimos 30 días</span> -->
     </div>
     <div class="panel-body">
       @for (c of salesReport()?.by_category ?? []; track c.category) {

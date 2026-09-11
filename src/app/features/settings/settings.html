@@ -47,7 +47,7 @@
           <label>Recargo por pago con tarjeta (%)</label>
           <input type="number" min="0" max="100"
                  [ngModel]="d.card_fee_pct" (ngModelChange)="patchDefaults('card_fee_pct', +$event)" />
-          <span class="cell-muted">Cubre la comisión del banco. No cuenta como ingreso del negocio.</span>
+          <!-- <span class="cell-muted">Cubre la comisión del banco. No cuenta como ingreso del negocio.</span> -->
         </div>
 
         <div class="form-field">
@@ -75,9 +75,7 @@
         {{ saving() ? 'Guardando…' : 'Guardar porcentajes' }}
       </button>
 
-      <p class="cell-muted" style="margin-top: 12px">
-        Esto no cambia las ventas ya hechas. Cada venta guarda el margen con el que se cobró.
-      </p>
+  
     </div>
   </div>
 }
@@ -124,9 +122,9 @@
 @if (!loading() && tab() === 'categorias'){
   <div class="panel" style="max-width: 620px;">
     <div class="panel-body">
-      <p class="cell-muted" style="margin-bottom: 16px;">
+      <!-- <p class="cell-muted" style="margin-bottom: 16px;">
         Las categorías agrupan el catálogo y sirven para filtrar en el punto de venta.
-      </p>
+      </p> -->
 
       <div style="display: flex; gap: 8px; margin-bottom: 20px;">
         <input type="text" placeholder="Llantas, Aceites y Lubricantes, Baterías..." 
@@ -141,9 +139,9 @@
         <div class="tot-row" style="align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line);">
           <span>
             <b>{{cat.name}}</b>
-            <span class="cell-muted">
+            <!-- <span class="cell-muted">
               · {{ cat.products_count === 1 ? 'producto' : 'productos'}}
-            </span>
+            </span> -->
           </span>
 
           <button class="btn btn-ghost btn-sm" style="color: var(--red);" (click)="removeCategory(cat)">
@@ -193,10 +191,10 @@
 
       <div class="danger-zone">
         <b>Borrar datos</b>
-        <p class="cell-muted">
+        <!-- <p class="cell-muted">
           Útil antes de entregar el sistema al cliente, para quitar los datos de prueba.
           No se puede deshacer.
-        </p>
+        </p> -->
         <div class="btn-row" style="margin-top: 12px">
           <button class="btn btn-secondary btn-sm" (click)="openReset('ventas')">
             Borrar ventas y movimientos

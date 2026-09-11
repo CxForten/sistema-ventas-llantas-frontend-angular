@@ -23,6 +23,6 @@ export const Money = {
     },
 
     withMargin(costCents: number, marginPct: number): number {
-        return Math.round(costCents * (1 + marginPct/100));
+        return Math.round((costCents * (100 + marginPct))/100);
     }
 }

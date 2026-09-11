@@ -1,10 +1,10 @@
 <div class="page-head">
   <div>
     <h1>Ventas</h1>
-    <div class="sub">Historial de transacciones</div>
+    <!-- <div class="sub">Historial de transacciones</div> -->
   </div>
   <button class="btn btn-secondary" (click)="exportCsv()" [disabled]="exporting()">
-    {{ exporting() ? 'Exportando…' : 'Exportar a Excel' }}
+    {{ exporting() ? 'Descargando…' : 'Descargar Historial' }}
   </button>
 </div>
 
@@ -180,7 +180,7 @@
                 [ngModel]="voidReason()"
                 (ngModelChange)="voidReason.set($event)"
               />
-              <span class="cell-muted">El stock vuelve al inventario y queda registrado en el kardex.</span>
+              <!-- <span class="cell-muted">El stock vuelve al inventario y queda registrado en el kardex.</span> -->
             </div>
             <button
               class="btn btn-danger"

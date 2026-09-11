@@ -35,6 +35,10 @@ export class CartStore {
     this.lines().reduce((a, l) => a + (l.product.cost_cents ?? 0) * l.qty, 0)
   );
 
+  readonly mainSubtotalCents = computed(() =>
+  this.lines().reduce((a, l) => a + l.product.price_cents * l.qty, 0)
+  );
+
   unitPrice(product: Product): number {
     const override = this.marginOverride();
     if (override === null) return product.price_cents;
@@ -138,4 +142,5 @@ export class CartStore {
     this.overrideReason.set('');
     this.paymentMethod.set('efectivo');
   }
+  
 }

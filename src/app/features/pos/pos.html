@@ -75,10 +75,10 @@
             <div class="ci-info">
               <b>{{ line.product.name }}</b>
               <div class="ci-cost">
-                @if (auth.can('products.cost')) {
+                <!-- @if (auth.can('products.cost')) {
                   costo {{ line.product.cost_cents | money }} →
-                }
-                {{ cart.unitPrice(line.product) | money }} c/u
+                } -->
+                <!-- {{ cart.unitPrice(line.product) | money }} c/u -->
               </div>
               <div class="ci-controls">
                 <button class="qty-btn" (click)="cart.changeQty(line.product.id, -1)">−</button>
@@ -92,7 +92,7 @@
             </div>
           </div>
         } @empty {
-          <div class="cart-empty">Toca un producto para agregarlo</div>
+          <div class="cart-empty">Agrega producto al carrito</div>
         }
       </div>
 
@@ -107,10 +107,10 @@
         <div class="margin-pick">
           <button class="margin-opt" [class.active]="cart.marginOverride() === null" (click)="setMargin(null)">
             <span class="m-lbl">Precio normal</span>
-            <span class="m-val num">{{ cart.subtotalCents() | money }}</span>
+            <span class="m-val num">{{ cart.mainSubtotalCents()| money }}</span>
           </button>
-          <button class="margin-opt" [class.active]="cart.marginOverride() === 20" (click)="setMargin(20)">
-            <span class="m-lbl">Rebajado 20%</span>
+          <button class="margin-opt" [class.active]="cart.marginOverride() === cart.marginAltPct()" (click)="setMargin(cart.marginAltPct())">
+            <span class="m-lbl">Precio {{ cart.marginAltPct() }}%</span>
             <span class="m-val num">{{ cart.altSubtotalCents() | money }}</span>
           </button>
         </div>
@@ -130,9 +130,9 @@
 
         <!-- ============ TOTAL EDITABLE ============ -->
         <div class="led-total led-editable">
+          <!-- <span class="led-hint">se puede editar</span> -->
           <div>
             <span class="led-label">Total a pagar</span>
-            <span class="led-hint">se puede editar</span>
           </div>
           <input
             class="led-input num"
@@ -204,9 +204,9 @@
             [ngModel]="totalInput()"
             (ngModelChange)="onTotalInput($event)"
           />
-          <div class="cell-muted" style="font-size: 11.5px; margin-top: 4px">
+          <!-- <div class="cell-muted" style="font-size: 11.5px; margin-top: 4px">
             {{ cart.isOverridden() ? 'Precio editado a mano' : 'toca el número para editarlo' }}
-          </div>
+          </div> -->
         </div>
 
         <!-- Método de pago -->
@@ -257,9 +257,9 @@
               <span>Recargo por tarjeta ({{ cart.cardFeePct() }}%)</span>
               <span class="num">+ {{ cart.cardFeeCents() | money }}</span>
             </div>
-            <p class="cell-muted" style="font-size: 11.5px; margin-top: 6px; line-height: 1.4">
+            <!-- <p class="cell-muted" style="font-size: 11.5px; margin-top: 6px; line-height: 1.4">
               El recargo cubre la comisión del banco. No cuenta como ingreso del negocio.
-            </p>
+            </p> -->
           </div>
         }
 
