@@ -914,3 +914,14 @@ tbody tr:hover { background: var(--bg-app); }
 .danger-zone p { font-size: 12.5px; max-width: 620px; line-height: 1.5; }
 
 .prod-card:disabled .prod-price { color: var(--muted); }
+
+.factura-box {
+  background: var(--bg-app);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 13px 15px 2px;
+  margin-bottom: 14px;
+}
+
+.factura-box .form-field { margin-bottom: 10px; }
+.factura-box .form-grid { gap: 12px; }

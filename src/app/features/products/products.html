@@ -99,7 +99,7 @@
       </div>
 
       <div class="modal-body">
-        <div class="form-grid">
+  <div class="form-grid">
   <div class="form-field full">
     <label>Nombre</label>
     <input
@@ -109,12 +109,13 @@
       (ngModelChange)="patch('name', $event)"
     />
   </div>
- 
+
   <div class="form-field">
     <label>Código (SKU)</label>
-    <input type="text" placeholder="LLA-002" [ngModel]="form().sku" (ngModelChange)="patch('sku', $event)" />
+    <input type="text" placeholder="LLA-002"
+           [ngModel]="form().sku" (ngModelChange)="patch('sku', $event)" />
   </div>
- 
+
   <div class="form-field">
     <label>Categoría</label>
     <select [ngModel]="form().category_id" (ngModelChange)="patch('category_id', +$event)">
@@ -123,37 +124,30 @@
       }
     </select>
   </div>
- 
+
   <div class="form-field">
     <label>Marca</label>
-    <input type="text" placeholder="Michelin" [ngModel]="form().brand" (ngModelChange)="patch('brand', $event)" />
+    <input type="text" placeholder="Michelin"
+           [ngModel]="form().brand" (ngModelChange)="patch('brand', $event)" />
   </div>
- 
+
   <div class="form-field">
     <label>Medida o especificación</label>
-    <input
-      type="text"
-      placeholder="185/65 R15 88H"
-      [ngModel]="form().spec"
-      (ngModelChange)="patch('spec', $event)"
-    />
+    <input type="text" placeholder="185/65 R15 88H"
+           [ngModel]="form().spec" (ngModelChange)="patch('spec', $event)" />
   </div>
- 
+
   <div class="form-field">
     <label>Precio de costo</label>
-    <input
-      type="text"
-      inputmode="decimal"
-      placeholder="0.00"
-      [ngModel]="form().cost"
-      (ngModelChange)="patch('cost', $event)"
-    />
+    <input type="text" inputmode="decimal" placeholder="0.00"
+           [ngModel]="form().cost" (ngModelChange)="patch('cost', $event)" />
   </div>
- 
+
   @if (!editing()) {
     <div class="form-field">
       <label>Stock</label>
-      <input type="number" min="0" [ngModel]="form().stock" (ngModelChange)="patch('stock', +$event)" />
+      <input type="number" min="0"
+             [ngModel]="form().stock" (ngModelChange)="patch('stock', +$event)" />
     </div>
   } @else {
     <div class="form-field">
@@ -162,7 +156,32 @@
       <span class="cell-muted">Se cambia desde Ajustar</span>
     </div>
   }
- 
+
+  <!-- La factura solo tiene sentido si entra mercadería -->
+  @if (!editing() && form().stock > 0) {
+    <div class="form-field full">
+      <div class="factura-box">
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Fecha de la factura</label>
+            <input type="date" [max]="hoy()"
+                   [ngModel]="form().document_date"
+                   (ngModelChange)="patch('document_date', $event)" />
+            <span class="cell-muted">La del documento, no la de hoy.</span>
+          </div>
+
+          <div class="form-field">
+            <label>Número de factura</label>
+            <input type="text" placeholder="001-001-000008842"
+                   [ngModel]="form().document_number"
+                   (ngModelChange)="patch('document_number', $event)" />
+            <span class="cell-muted">Opcional.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
   <div class="form-field full">
     <label>Precios de venta calculados</label>
     <div class="calc-prices">
@@ -218,17 +237,42 @@
           <label>
             {{ adjustForm().type === 'ajuste' ? 'Cantidad contada' : 'Cantidad' }}
           </label>
-          <input type="number" min="0" [ngModel]="adjustForm().qty" (ngModelChange)="patchAdjust('qty', +$event)" />
+          <input type="number" min="0"
+                 [ngModel]="adjustForm().qty"
+                 (ngModelChange)="patchAdjust('qty', +$event)" />
         </div>
+
+        <!-- Los datos de la factura solo tienen sentido en una entrada -->
+        @if (adjustForm().type === 'entrada') {
+          <div class="factura-box">
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Fecha de la factura</label>
+                <input type="date"
+                       [max]="hoy()"
+                       [ngModel]="adjustForm().document_date"
+                       (ngModelChange)="patchAdjust('document_date', $event)" />
+                <span class="cell-muted">La del documento, no la de hoy.</span>
+              </div>
+
+              <div class="form-field">
+                <label>Número de factura</label>
+                <input type="text" placeholder="001-001-000008842"
+                       [ngModel]="adjustForm().document_number"
+                       (ngModelChange)="patchAdjust('document_number', $event)" />
+              </div>
+            </div>
+          </div>
+        }
 
         <div class="form-field">
           <label>Motivo</label>
-          <input
-            type="text"
-            placeholder="Compra a distribuidora, factura 8842"
-            [ngModel]="adjustForm().reason"
-            (ngModelChange)="patchAdjust('reason', $event)"
-          />
+          <input type="text"
+                 [placeholder]="adjustForm().type === 'entrada'
+                   ? 'Compra a Distribuidora Andina'
+                   : 'Conteo físico del mes'"
+                 [ngModel]="adjustForm().reason"
+                 (ngModelChange)="patchAdjust('reason', $event)" />
         </div>
       </div>
 
@@ -239,6 +283,7 @@
     </div>
   </div>
 }
+
 
 <!-- ============ MODAL: kardex ============ -->
 @if (kardexOpen()) {

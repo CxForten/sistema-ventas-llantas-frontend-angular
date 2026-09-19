@@ -40,12 +40,14 @@ export class Products {
     category_id: null as number | null,
     cost: '',
     stock: 0,
+    document_date: '',
+    document_number: '',
   });
 
   /* --- Modal de ajuste de inventario --- */
   adjustOpen = signal(false);
   adjustProduct = signal<Product | null>(null);
-  adjustForm = signal({ type: 'entrada' as 'entrada' | 'salida' | 'ajuste', qty: 0, reason: '' });
+  adjustForm = signal({ type: 'entrada' as 'entrada' | 'salida' | 'ajuste', qty: 0, reason: '', document_date: '', document_number: '', });
 
   /* --- Modal de kardex --- */
   kardexOpen = signal(false);
@@ -83,7 +85,6 @@ export class Products {
       const search = this.search();
       const categoryId = this.categoryFilter();
       this.load(search, categoryId);
-      this.load(this.search(), this.categoryFilter())
     });
   }
 
@@ -124,6 +125,8 @@ export class Products {
       category_id: this.categories()[0]?.id ?? null,
       cost: '',
       stock: 0,
+      document_date: this.hoy(),
+      document_number: '',
     });
     this.modalOpen.set(true);
   }
@@ -138,6 +141,8 @@ export class Products {
       category_id: product.category_id,
       cost: Money.format(product.cost_cents ?? 0),
       stock: product.stock,
+      document_date: '',
+      document_number: '',
     });
     this.modalOpen.set(true);
   }
@@ -176,7 +181,15 @@ export class Products {
     };
 
     // El stock solo al crear. Al editar se cambia por ajuste de inventario.
-    if (!this.editing()) payload['stock'] = f.stock;
+    if (!this.editing()) {
+      payload['stock'] = f.stock;
+
+      if (f.stock > 0) {
+        payload['document_date'] = f.document_date || null;
+        payload['document_number'] = f.document_number.trim() || null;
+      }
+      
+    }
 
     this.saving.set(true);
     try {
@@ -213,7 +226,7 @@ export class Products {
 
   openAdjust(product: Product): void {
     this.adjustProduct.set(product);
-    this.adjustForm.set({ type: 'entrada', qty: 0, reason: '' });
+    this.adjustForm.set({ type: 'entrada', qty: 0, reason: '', document_date: new Date().toISOString().slice(0,10), document_number: '', });
     this.adjustOpen.set(true);
   }
 
@@ -237,6 +250,8 @@ export class Products {
         type: f.type,
         qty: f.qty,
         reason: f.reason.trim(),
+        document_date: f.type === 'entrada' ? (f.document_date || null) : null,
+        document_number: f.type === 'entrada' ? (f.document_number.trim() || null): null,
       });
       this.toast.success(`Inventario actualizado. Stock: ${res.product.stock}`);
       this.adjustOpen.set(false);
@@ -270,6 +285,10 @@ export class Products {
       anulacion: 'Anulación',
     };
     return labels[type] ?? type;
+  }
+
+  hoy(): string {
+    return new Date().toISOString().slice(0, 10);
   }
 
   

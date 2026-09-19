@@ -138,13 +138,17 @@ export interface StockMovement {
   reason: string | null;
   reference_type: string | null;
   reference_id: number | null;
+
+  document_date: string | null;
+  document_number: string | null;
+
   user: string | null;
   created_at: string;
   product?: {
     id?: number;
     name?: string | null;
     sku?: string | null;
-  } | null
+  } | null;
 }
 
 export interface DashboardTotals {

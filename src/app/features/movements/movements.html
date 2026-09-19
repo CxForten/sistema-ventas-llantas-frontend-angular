@@ -38,56 +38,61 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Producto</th>
-          <th>Tipo</th>
-          <th class="cell-right">Cantidad</th>
-          <th class="cell-right">Antes</th>
-          <th class="cell-right">Después</th>
-          <th>Motivo</th>
-          <th>Quién</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (m of movements(); track m.id) {
-          <tr>
-            <td class="cell-muted">{{ m.created_at | date: 'dd/MM/yy HH:mm' }}</td>
-            <td>
-              <b>{{ m.product?.name || 'Producto eliminado' }}</b>
-              @if (m.product?.sku) {
-                <div class="cell-muted">{{ m.product?.sku }}</div>
-              }
-            </td>
-            <td>
-              <span class="badge" [class]="'badge ' + typeClass(m.type)">
-                {{ typeLabel(m.type) }}
-              </span>
-            </td>
-            <td
-              class="cell-right num cell-strong"
-              [style.color]="m.qty < 0 ? 'var(--red)' : 'var(--green)'"
-            >
-              {{ m.qty > 0 ? '+' : '' }}{{ m.qty }}
-            </td>
-            <td class="cell-right num cell-muted">{{ m.stock_before }}</td>
-            <td class="cell-right num">{{ m.stock_after }}</td>
-            <td class="cell-muted">{{ m.reason || '—' }}</td>
-            <td class="cell-muted">{{ m.user || '—' }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="8">
-              <div class="empty-state">
-                <b>{{ loading() ? 'Cargando…' : 'Sin movimientos' }}</b>
-                @if (!loading()) {
-                  Los movimientos aparecen al vender, ajustar inventario o registrar productos.
-                }
-              </div>
-            </td>
-          </tr>
+  <tr>
+    <th>Ingresó</th>
+    <th>Producto</th>
+    <th>Tipo</th>
+    <th class="cell-right">Cantidad</th>
+    <th class="cell-right">Antes</th>
+    <th class="cell-right">Después</th>
+    <th>Factura</th>
+    <th>Motivo</th>
+    <th>Quién</th>
+  </tr>
+</thead>
+<tbody>
+  @for (m of movements(); track m.id) {
+    <tr>
+      <td class="cell-muted">
+        {{ (m.document_date || m.created_at) | date: 'dd/MM/yy' }}
+        @if (m.document_date) {
+          <div class="cell-muted" style="font-size: 10.5px">
+            registrado {{ m.created_at | date: 'dd/MM' }}
+          </div>
         }
-      </tbody>
+      </td>
+      <td>
+        <b>{{ m.product?.name || 'Producto eliminado' }}</b>
+        @if (m.product?.sku) {
+          <div class="cell-muted">{{ m.product?.sku }}</div>
+        }
+      </td>
+      <td>
+        <span class="badge" [class]="'badge ' + typeClass(m.type)">
+          {{ typeLabel(m.type) }}
+        </span>
+      </td>
+      <td class="cell-right num cell-strong"
+          [style.color]="m.qty < 0 ? 'var(--red)' : 'var(--green)'">
+        {{ m.qty > 0 ? '+' : '' }}{{ m.qty }}
+      </td>
+      <td class="cell-right num cell-muted">{{ m.stock_before }}</td>
+      <td class="cell-right num">{{ m.stock_after }}</td>
+      <td class="cell-muted">{{ m.document_number || '—' }}</td>
+      <td class="cell-muted">{{ m.reason || '—' }}</td>
+      <td class="cell-muted">{{ m.user || '—' }}</td>
+    </tr>
+  } @empty {
+    <tr>
+      <td colspan="9">
+        <div class="empty-state">
+          <b>{{ loading() ? 'Cargando…' : 'Sin movimientos' }}</b>
+        </div>
+      </td>
+    </tr>
+  }
+</tbody>
+
     </table>
   </div>
 

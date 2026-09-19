@@ -28,12 +28,12 @@ export class ProductsApi {
         return firstValueFrom(this.http.get<Wrapped<Product>>(`/api/products/${id}`));
     }
 
-    create (data: Partial<Product>): Promise<Wrapped<Product>> {
+    create (data: Record<string, unknown>): Promise<Wrapped<Product>> {
         return firstValueFrom(this.http.post<Wrapped<Product>>('/api/products', data))
     }
 
     
-    update(id: number, data: Partial<Product>): Promise<Wrapped<Product>> {
+    update(id: number, data: Record<string, unknown>): Promise<Wrapped<Product>> {
         return firstValueFrom(this.http.put<Wrapped<Product>>(`/api/products/${id}`, data));
     }
 
@@ -47,11 +47,14 @@ export class ProductsApi {
     }
 
     adjustStock(data: {
-        product_id: number;
-        type: 'entrada' | 'salida' | 'ajuste';
-        qty: number;
-        reason: string;
-    }): Promise<{message: string; movement: StockMovement; product: Product}> {
-        return firstValueFrom(this.http.post<any>('/api/stock/adjust', data))
-    }
+    product_id: number;
+    type: 'entrada' | 'salida' | 'ajuste';
+    qty: number;
+    reason: string;
+    document_date?: string | null;
+    document_number?: string | null;
+  }): Promise<{ message: string; movement: StockMovement; product: Product }> {
+    return firstValueFrom(this.http.post<any>('/api/stock/adjust', data));
+  }
+
 }
